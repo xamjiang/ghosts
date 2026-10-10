@@ -1,14 +1,79 @@
-# Ghosts 👻
+<p align="center">
+  <img src="docs/images/banner.svg" alt="Ghosts：找出被遺忘的 dev server 和 Docker 容器" width="100%">
+</p>
 
-找出背景裡被遺忘的 dev server 和 Docker 容器，看它們吃了多少 CPU、記憶體和電，並直接關掉。
+<p align="center">
+  <a href="https://github.com/xamjiang/ghosts/releases/latest"><img src="https://img.shields.io/github/v/release/xamjiang/ghosts?style=flat-square&color=0A84FF&label=release" alt="Release"></a>
+  <a href="https://github.com/xamjiang/ghosts/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/xamjiang/ghosts/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
+  <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux-1C1C1E?style=flat-square&logo=apple&logoColor=white" alt="macOS · Linux">
+  <img src="https://img.shields.io/github/go-mod/go-version/xamjiang/ghosts?style=flat-square&color=00ADD8&logo=go&logoColor=white" alt="Go">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/xamjiang/ghosts?style=flat-square&color=30D158" alt="MIT"></a>
+</p>
+
+<h3 align="center">一行安裝</h3>
 
 ```sh
 curl -fsSL https://ghosts.xamjiang.com/install | bash
 ```
 
-裝好後在終端機輸入 `ghosts` 就能開始。支援 macOS 13 以上和 Linux（amd64 / arm64）。
+<p align="center">裝好後在終端機輸入 <code>ghosts</code> 就能開始。支援 macOS 13 以上和 Linux（amd64 / arm64）。<br>
+<sub>Ubuntu / Debian 會加入 APT repo、有 Homebrew 就用 brew，其他系統直接下載 binary。<a href="#安裝細節">安裝細節 ↓</a></sub></p>
 
-AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker 服務，結束後卻沒關。Ghosts 讓你一眼看到這些「幽靈」。
+<br>
+
+<p align="center">
+  <img src="docs/images/demo.svg" alt="Ghosts 的畫面：列出正在 listen 的 dev server、它們的 CPU、記憶體和耗電，選取後在右側顯示詳細資訊" width="100%">
+</p>
+
+AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker 服務，結束後卻沒關。關掉的終端機、跑完的 agent、兩天前的 `npm run dev`，都還在背景吃電。**Ghosts 讓你一眼看到這些「幽靈」，按一個鍵就關掉。**
+
+## ✨ 能做什麼
+
+<table>
+  <tr>
+    <td width="40%" valign="top" rowspan="2">
+      <h3>👻 認出真正的幽靈</h3>
+      <p>終端機關了、agent 跑完了，server 卻還在：Ghosts 會把這種脫離 session 的程序標成 <b>detached</b>，並告訴你它屬於哪個專案、跑了多久、完整的指令是什麼。</p>
+      <img src="docs/images/detached.svg" alt="詳細資訊面板：vite 已執行 2 天 4 小時，Parent 顯示 detached from its session" width="100%">
+    </td>
+    <td width="60%" valign="top">
+      <h3>🔋 看誰在吃電</h3>
+      <p>每個服務的 CPU、記憶體，以及 Apple Silicon 上每個程序的實際耗電（含子程序），按 <kbd>s</kbd> 依耗電排序。</p>
+      <img src="docs/images/power.svg" alt="依耗電排序的 port 清單，next dev 用了 2.4 W" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>🐳 Docker 也一起管</h3>
+      <p>容器依 compose 專案分組，Docker Desktop 代理的 port 會對回真正的容器。一次停掉整個 compose 專案。</p>
+      <img src="docs/images/containers.svg" alt="Containers 分頁：agent-api、storefront 兩個 compose 專案和一個獨立容器" width="100%">
+    </td>
+  </tr>
+</table>
+
+### 🛑 安全地關掉
+
+<img align="right" src="docs/images/stop.svg" alt="按 x 後出現確認列，按 y 停止 vite，顯示 Stopped vite · port 5173 is free" width="58%">
+
+按 <kbd>x</kbd> 停止，<kbd>X</kbd> 強制停止。
+
+- 先送 SIGTERM，3 秒沒結束才詢問要不要 SIGKILL
+- 送出前比對程序的啟動時間，PID 被重複使用也不會誤殺
+- 容器用 `docker stop`，不會誤殺 Docker Desktop
+- App 和系統服務預設隱藏，要停之前會多一句警告
+
+<br clear="right">
+
+### ⚡ 輕到可以一直開著
+
+| | macOS（M 系列） | Linux（i7-8700） |
+|---|---|---|
+| 一次掃描 | ~2 ms | ~4 ms |
+| CPU | ~1% | ~0.9% |
+| 記憶體 | ~15 MB | ~19 MB |
+| 外部程式 | 不 fork `lsof`，直接讀 kernel | 不 fork `ss`，直接走 netlink |
+
+視窗失去焦點時掃描頻率自動降到三分之一，Docker 則靠事件串流即時更新。
 
 ## 安裝細節
 
@@ -31,7 +96,9 @@ echo "deb [signed-by=/etc/apt/keyrings/ghosts.gpg] https://ghosts.xamjiang.com/a
 sudo apt update && sudo apt install ghosts
 ```
 
-## 參數
+## ⌨️ 使用
+
+### 參數
 
 | 參數 | 說明 |
 |---|---|
@@ -39,7 +106,7 @@ sudo apt update && sudo apt install ghosts
 | `-no-mouse` | 不接管滑鼠，保留終端機原生的文字選取 |
 | `-list [-all]` | 只印出一次清單後結束，方便在 script 中使用 |
 
-## 快捷鍵
+### 快捷鍵
 
 | 鍵 | 動作 |
 |---|---|
@@ -53,9 +120,14 @@ sudo apt update && sudo apt install ghosts
 | `s` | 排序：port / 耗電 / 記憶體 / 最新 / 名稱 |
 | `?` | 說明 |
 
-## 運作方式
+想更省電的話，可以用 `-interval 5s`。
 
-以下是 macOS 的做法，Linux 的差異列在下一節。
+## 🔍 運作方式
+
+<details>
+<summary>不靠 <code>lsof</code>、不 fork 任何程式，直接讀 kernel。點開看細節。</summary>
+
+以下是 macOS 的做法，Linux 的差異列在後面。
 
 - **Port**：不呼叫 `lsof`，而是直接透過 `sysctl` 和 libproc 讀取 kernel 的資料：一次 sysctl 取得整個程序表，再列舉你自己程序的 socket。一次掃描約 2ms，不會 fork 任何外部程式。程序的指令和工作目錄依 PID 快取。
 - **資源使用**：用 `proc_pid_rusage` 讀取每個程序累計的 CPU 時間、記憶體（和活動監視器的「記憶體」欄一致）和能耗。能耗計數器只有 Apple Silicon 才有，Intel Mac 上會隱藏 POWER 欄。每個服務的數值包含它的子程序，速率取最近約 6 秒的平均。
@@ -63,7 +135,7 @@ sudo apt update && sudo apt install ghosts
 - **Docker**：直接連 Docker Engine 的 unix socket（支援 Docker Desktop、OrbStack、Colima），訂閱事件串流即時更新。由 Docker 對外開的 port 會對應回實際的容器，停止時執行的是 `docker stop`，不會誤殺 Docker Desktop。
 - **停止程序**：先送 SIGTERM，3 秒內沒結束才會詢問是否 SIGKILL；送出前會比對程序啟動時間，避免 PID 被重複使用時誤殺其他程序。
 
-### Linux 上的差異
+#### Linux 上的差異
 
 - **Port**：用 netlink（sock_diag，和 `ss` 相同的機制）只向 kernel 要 LISTEN 狀態的 socket，再從 `/proc/<pid>/fd` 對應回程序。對應結果會快取，只有出現新的 socket 時才重新查，或每 30 秒更新一次。程序表、CPU 和記憶體都來自 `/proc/<pid>/stat`，一次掃描約 4ms，一樣不 fork 任何外部程式。
 - **資源使用**：記憶體是 RSS（和 `top` 的 RES 一致）。Linux 沒有每個程序的能耗計數器，也不提供每個程序的 wakeup 次數，所以會隱藏 POWER 欄和 Wakeups。
@@ -71,11 +143,9 @@ sudo apt update && sudo apt install ghosts
 - **Docker**：會依照 `docker context` 目前選的 context 決定要連哪個 socket，所以 Docker Engine 和 Docker Desktop 並存時，看到的會和 `docker ps` 一樣。Docker Engine 的容器直接跑在主機上，沒有 VM，這時摘要列會改成所有容器的 CPU 和記憶體加總。
 - **開啟瀏覽器**：用 `xdg-open`。透過 SSH 連線時，改用 OSC 52 把網址複製到你本機的剪貼簿（需要終端機支援，例如 iTerm2、Ghostty、kitty）。
 
-## 自身資源佔用
+</details>
 
-在 M 系列 Mac 上，以預設每 2 秒掃描一次：CPU 約佔一顆核心的 1%、耗電約 3mW、記憶體約 15MB。在 Linux（i7-8700、約 400 個程序）上：CPU 約 0.9%、記憶體約 19MB。終端機視窗失去焦點時，掃描頻率會降到三分之一。想再更省的話，可以用 `-interval 5s`。
-
-## 開發
+## 🛠 開發
 
 ```sh
 go build -o bin/ghosts ./cmd/ghosts && ./bin/ghosts
@@ -90,9 +160,16 @@ GOOS=linux GOARCH=amd64 go build -o bin/ghosts-linux ./cmd/ghosts
 
 平台相關的程式碼用檔名區分：`internal/ports/*_darwin.go`、`*_linux.go`，以及 `internal/ui/platform_*.go`。
 
-## 發佈新版本
+### README 截圖
 
-推一個 tag 就會自動完成發佈：
+`docs/images/` 裡的截圖不是手動截的，而是用真正的 UI 程式碼搭配假資料渲染成 SVG，所以不會洩漏你電腦上的程序和路徑。改了 UI 之後重新產生：
+
+```sh
+GHOSTS_SCREENSHOTS=$PWD/docs/images go test -run TestScreenshots ./internal/ui
+```
+
+<details>
+<summary><b>發佈新版本</b>：推一個 tag，macOS / Linux binary、<code>.deb</code>、APT repo 和 Homebrew formula 全部自動更新。</summary>
 
 ```sh
 git tag v0.6.0 && git push origin v0.6.0
@@ -118,10 +195,14 @@ tag 可以加上預發佈後綴（例如 `v0.2.0-rc1`），`.deb` 的版本號�
 | `CLOUDFLARE_API_TOKEN` | 可以部署 Worker 的 Cloudflare API token（`worker.yml` 用） |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 帳號 ID |
 
-### ghosts.xamjiang.com
+#### ghosts.xamjiang.com
 
 `worker/` 是一個 Cloudflare Worker：`/install` 提供 install script（瀏覽器打開則顯示說明頁），`/apt/` 是 APT repo。APT repo 沒有自己的儲存空間：索引檔來自最新一個 GitHub Release 的附件，`.deb` 則重新導向到該版本 Release 的下載網址，公鑰（`packaging/apt-key.*`）打包在 Worker 裡。所以 apt 只看得到最新版；舊版可以從 Releases 下載 `.deb` 安裝。Script 是打包進 Worker 裡的，所以修改 `packaging/install.sh` 或 `worker/` 並推到 main 之後，`.github/workflows/worker.yml` 會自動重新部署。本機測試：
 
 ```sh
 cd worker && npx wrangler@4.137.0 dev
 ```
+
+</details>
+
+<p align="center"><sub>MIT License · 用 <a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a> 打造 · <a href="https://ghosts.xamjiang.com">ghosts.xamjiang.com</a></sub></p>
