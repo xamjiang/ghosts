@@ -1,29 +1,26 @@
 #!/usr/bin/env bash
-# Build a signed APT repository from .deb packages.
+# Build the signed index of the APT repository for one release.
 #
 #   packaging/apt-repo.sh OUT_DIR PACKAGE.deb...
 #
 # Signs with the default key in the GPG keyring (or $GPG_KEY_ID). Needs
-# apt-ftparchive (apt-utils), dpkg-deb and gpg. Layout, as served at
-# https://ghosts.xamjiang.com/apt:
+# apt-ftparchive (apt-utils), dpkg-deb and gpg. Writes the standard layout:
 #
-#   key.gpg, key.asc                          public signing key
 #   pool/main/g/ghosts/ghosts_<ver>_<arch>.deb
 #   dists/stable/main/binary-<arch>/Packages{,.gz}
 #   dists/stable/{Release,Release.gpg,InRelease}
 #
-# Only the given packages are indexed, so each release lists just its own
-# version; older .debs stay in the pool for anyone pinning them.
+# Nothing here is hosted as is: the release workflow attaches the index files
+# to the GitHub release, and the Worker at ghosts.xamjiang.com/apt serves them
+# from the latest release, redirecting pool/ to the release's .deb assets. The
+# public key (packaging/apt-key.*) is bundled into the Worker.
 set -euo pipefail
 
 out="$1"
 shift
 archs=(amd64 arm64)
-gpg_args=(--batch --yes) key=()
-if [ -n "${GPG_KEY_ID:-}" ]; then
-	gpg_args+=(--local-user "$GPG_KEY_ID")
-	key=("$GPG_KEY_ID")
-fi
+gpg_args=(--batch --yes)
+[ -z "${GPG_KEY_ID:-}" ] || gpg_args+=(--local-user "$GPG_KEY_ID")
 
 mkdir -p "$out/pool/main/g/ghosts"
 for deb in "$@"; do
@@ -53,5 +50,3 @@ mv Release.tmp dists/stable/Release
 
 gpg "${gpg_args[@]}" --clearsign -o dists/stable/InRelease dists/stable/Release
 gpg "${gpg_args[@]}" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release
-gpg "${gpg_args[@]}" --armor --export "${key[@]}" >key.asc
-gpg "${gpg_args[@]}" --export "${key[@]}" >key.gpg

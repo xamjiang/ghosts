@@ -109,7 +109,7 @@ git tag v0.6.0 && git push origin v0.6.0
 3. Linux：編譯 amd64 和 arm64，並用 `packaging/deb.sh` 打包成 `.deb`。`.deb` 的檔名不含版本號（`ghosts_linux_amd64.deb`），所以 `releases/latest/download/…` 這個網址永遠指向最新版。
 4. 建立 GitHub Release，附上所有檔案和 `checksums.txt`。
 5. 用 `packaging/ghosts.rb.tmpl` 產生同時支援 macOS 和 Linux 的 formula，推到 [xamjiang/homebrew-tap](https://github.com/xamjiang/homebrew-tap)。
-6. 用 `packaging/apt-repo.sh` 產生並簽章 APT repo，上傳到 Cloudflare R2（bucket `ghosts`，路徑 `apt/`）。
+6. 用 `packaging/apt-repo.sh` 產生並簽章 APT 索引（`apt_InRelease`、`apt_Packages_amd64.gz`…），和 `.deb` 一起附在 Release 上。Release 先建成草稿，所有檔案上傳完才發佈，所以 apt 不會讀到只上傳一半的版本。
 
 tag 可以加上預發佈後綴（例如 `v0.2.0-rc1`），`.deb` 的版本號會轉成 `0.2.0~rc1`，所以 apt 會把它排在正式版 `0.2.0` 之前。
 
@@ -119,12 +119,12 @@ tag 可以加上預發佈後綴（例如 `v0.2.0-rc1`），`.deb` 的版本號�
 |---|---|
 | `HOMEBREW_TAP_TOKEN` | 只對 `homebrew-tap` 有 Contents 讀寫權限的 fine-grained token |
 | `APT_GPG_PRIVATE_KEY` | APT repo 的簽章私鑰（ASCII armor） |
-| `CLOUDFLARE_API_TOKEN` | 可以部署 Worker、寫入 R2 的 Cloudflare API token |
+| `CLOUDFLARE_API_TOKEN` | 可以部署 Worker 的 Cloudflare API token（`worker.yml` 用） |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 帳號 ID |
 
 ### ghosts.xamjiang.com
 
-`worker/` 是一個 Cloudflare Worker：`/install` 提供 install script（瀏覽器打開則顯示說明頁），`/apt/` 從 R2 提供 APT repo。Script 是打包進 Worker 裡的，所以修改 `packaging/install.sh` 或 `worker/` 並推到 main 之後，`.github/workflows/worker.yml` 會自動重新部署。本機測試：
+`worker/` 是一個 Cloudflare Worker：`/install` 提供 install script（瀏覽器打開則顯示說明頁），`/apt/` 是 APT repo。APT repo 沒有自己的儲存空間：索引檔來自最新一個 GitHub Release 的附件，`.deb` 則重新導向到該版本 Release 的下載網址，公鑰（`packaging/apt-key.*`）打包在 Worker 裡。所以 apt 只看得到最新版；舊版可以從 Releases 下載 `.deb` 安裝。Script 是打包進 Worker 裡的，所以修改 `packaging/install.sh` 或 `worker/` 並推到 main 之後，`.github/workflows/worker.yml` 會自動重新部署。本機測試：
 
 ```sh
 cd worker && npx wrangler@4.137.0 dev

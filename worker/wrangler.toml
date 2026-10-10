@@ -7,9 +7,13 @@ workers_dev = false
 
 routes = [{ pattern = "ghosts.xamjiang.com", custom_domain = true }]
 
-# The APT repository (keys under apt/), uploaded by the release workflow.
-r2_buckets = [{ binding = "BUCKET", bucket_name = "ghosts" }]
+# The install script, landing page and APT public key are bundled into the
+# Worker, so they are served from the edge with no origin fetch.
+rules = [
+  { type = "Text", globs = ["**/*.sh", "**/*.html", "**/*.asc"], fallthrough = true },
+  { type = "Data", globs = ["**/*.gpg"], fallthrough = true },
+]
 
-# The install script is bundled into the Worker, so it is served from the
-# edge with no origin fetch.
-rules = [{ type = "Text", globs = ["**/*.sh", "**/*.html"], fallthrough = true }]
+# The APT index and packages are assets of the GitHub releases.
+[vars]
+RELEASES = "https://github.com/xamjiang/ghosts/releases"
