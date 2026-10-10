@@ -1,7 +1,7 @@
 name: Release
 
-# Push a tag like v0.1.0 to build a universal binary, publish a GitHub
-# release, and update the formula in xamjiang/homebrew-tap.
+# Push a tag like v0.1.0 to build macOS and Linux binaries and .deb packages,
+# publish a GitHub release, and update the formula in xamjiang/homebrew-tap.
 on:
   push:
     tags: ["v*"]
@@ -10,7 +10,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  macos:
+    # cgo + libproc: has to build on macOS.
     runs-on: macos-latest
     env:
       CGO_ENABLED: "1"
@@ -30,32 +31,90 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           LDFLAGS="-s -w -X main.version=${VERSION}"
-          GOARCH=arm64 CC="clang -arch arm64" go build -trimpath -ldflags "$LDFLAGS" -o dist/arm64/ghosts ./cmd/ghosts
-          GOARCH=amd64 CC="clang -arch x86_64" go build -trimpath -ldflags "$LDFLAGS" -o dist/amd64/ghosts ./cmd/ghosts
-          mkdir -p dist/pkg
-          lipo -create -output dist/pkg/ghosts dist/arm64/ghosts dist/amd64/ghosts
-          dist/pkg/ghosts -version | grep -qx "ghosts ${VERSION}"
-          cp LICENSE README.md dist/pkg/
-          ARCHIVE="ghosts_${VERSION}_darwin_universal.tar.gz"
-          tar -C dist/pkg -czf "dist/${ARCHIVE}" ghosts LICENSE README.md
-          (cd dist && shasum -a 256 "${ARCHIVE}" > checksums.txt)
-          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
-          echo "ARCHIVE=${ARCHIVE}" >> "$GITHUB_ENV"
+          GOARCH=arm64 CC="clang -arch arm64" go build -trimpath -ldflags "$LDFLAGS" -o build/arm64/ghosts ./cmd/ghosts
+          GOARCH=amd64 CC="clang -arch x86_64" go build -trimpath -ldflags "$LDFLAGS" -o build/amd64/ghosts ./cmd/ghosts
+          mkdir -p build/pkg dist
+          lipo -create -output build/pkg/ghosts build/arm64/ghosts build/amd64/ghosts
+          build/pkg/ghosts -version | grep -qx "ghosts ${VERSION}"
+          cp LICENSE README.md build/pkg/
+          tar -C build/pkg -czf "dist/ghosts_${VERSION}_darwin_universal.tar.gz" ghosts LICENSE README.md
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-macos
+          path: dist/
+
+  linux:
+    # No cgo on Linux, so both architectures cross-compile here.
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: Build binaries and packages
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          LDFLAGS="-s -w -X main.version=${VERSION}"
+          mkdir -p dist
+          for ARCH in amd64 arm64; do
+            mkdir -p "build/${ARCH}"
+            GOARCH="$ARCH" go build -trimpath -ldflags "$LDFLAGS" -o "build/${ARCH}/ghosts" ./cmd/ghosts
+            cp LICENSE README.md "build/${ARCH}/"
+            tar -C "build/${ARCH}" -czf "dist/ghosts_${VERSION}_linux_${ARCH}.tar.gz" ghosts LICENSE README.md
+            # Versionless name, so releases/latest/download/… always works.
+            packaging/deb.sh "$VERSION" "$ARCH" "build/${ARCH}/ghosts" "dist/ghosts_linux_${ARCH}.deb"
+          done
+          build/amd64/ghosts -version | grep -qx "ghosts ${VERSION}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-linux
+          path: dist/
+
+  release:
+    needs: [macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" "dist/${ARCHIVE}" dist/checksums.txt --generate-notes --verify-tag
+        run: |
+          cd dist
+          sha256sum -- * > checksums.txt
+          cat checksums.txt
+          gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag -- *
 
       - name: Update Homebrew tap
         env:
           # Fine-grained token with "Contents: read and write" on homebrew-tap.
           TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
-          SHA256="$(cut -d' ' -f1 dist/checksums.txt)"
+          VERSION="${GITHUB_REF_NAME#v}"
+          sha() { grep " ghosts_${VERSION}_$1.tar.gz\$" dist/checksums.txt | cut -d' ' -f1; }
           git clone "https://x-access-token:${TAP_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/homebrew-tap.git" tap
           mkdir -p tap/Formula
-          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA256}/g" packaging/ghosts.rb.tmpl > tap/Formula/ghosts.rb
+          sed -e "s/@VERSION@/${VERSION}/g" \
+              -e "s/@SHA256_DARWIN@/$(sha darwin_universal)/" \
+              -e "s/@SHA256_LINUX_AMD64@/$(sha linux_amd64)/" \
+              -e "s/@SHA256_LINUX_ARM64@/$(sha linux_arm64)/" \
+              packaging/ghosts.rb.tmpl > tap/Formula/ghosts.rb
+          if grep -nE '@[A-Z0-9_]+@|sha256 ""' tap/Formula/ghosts.rb; then echo "formula is incomplete"; exit 1; fi
           cd tap
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

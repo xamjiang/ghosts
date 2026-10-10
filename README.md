@@ -12,7 +12,14 @@ AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker �
 brew install xamjiang/tap/ghosts
 ```
 
-**Linux**（amd64 / arm64）：目前先從原始碼安裝，需要 Go：
+**Ubuntu / Debian**（amd64 / arm64）：
+
+```sh
+curl -fsSLO https://github.com/xamjiang/ghosts/releases/latest/download/ghosts_linux_$(dpkg --print-architecture).deb
+sudo apt install ./ghosts_linux_*.deb
+```
+
+**其他 Linux**：用 Homebrew（`brew install xamjiang/tap/ghosts`），或從 [Releases](https://github.com/xamjiang/ghosts/releases) 下載 tarball，或用 Go 從原始碼安裝：
 
 ```sh
 go install github.com/xamjiang/ghosts/cmd/ghosts@latest
@@ -93,9 +100,12 @@ git tag v0.1.0 && git push origin v0.1.0
 
 `.github/workflows/release.yml` 會依序做這些事：
 
-1. 跑測試。
-2. 編譯 universal binary。
-3. 建立 GitHub Release。
-4. 用 `packaging/ghosts.rb.tmpl` 產生 formula，推到 [xamjiang/homebrew-tap](https://github.com/xamjiang/homebrew-tap)。
+1. 在 macOS 和 Ubuntu 上分別跑測試。
+2. macOS：編譯 universal binary（arm64 + amd64）。
+3. Linux：編譯 amd64 和 arm64，並用 `packaging/deb.sh` 打包成 `.deb`。`.deb` 的檔名不含版本號（`ghosts_linux_amd64.deb`），所以 `releases/latest/download/…` 這個網址永遠指向最新版。
+4. 建立 GitHub Release，附上所有檔案和 `checksums.txt`。
+5. 用 `packaging/ghosts.rb.tmpl` 產生同時支援 macOS 和 Linux 的 formula，推到 [xamjiang/homebrew-tap](https://github.com/xamjiang/homebrew-tap)。
+
+tag 可以加上預發佈後綴（例如 `v0.2.0-rc1`），`.deb` 的版本號會轉成 `0.2.0~rc1`，所以 apt 會把它排在正式版 `0.2.0` 之前。
 
 第一次發佈前要先在 ghosts repo 設定 `HOMEBREW_TAP_TOKEN` secret：一個只對 `homebrew-tap` 有 Contents 讀寫權限的 fine-grained token。
