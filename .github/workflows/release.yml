@@ -121,3 +121,38 @@ jobs:
           git add Formula/ghosts.rb
           git commit -m "ghosts ${VERSION}"
           git push
+
+  apt:
+    # Publish the .debs to the APT repository at ghosts.xamjiang.com/apt (R2),
+    # after the GitHub release succeeded.
+    needs: [linux, release]
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist-linux
+          path: dist
+
+      - name: Build and sign the repository
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+        run: |
+          sudo apt-get install -y -qq apt-utils >/dev/null
+          echo "$APT_GPG_PRIVATE_KEY" | gpg --batch --import
+          packaging/apt-repo.sh repo dist/*.deb
+          find repo -type f | sort
+
+      - name: Upload to R2
+        run: |
+          cd repo
+          # Packages first and the signed index last, so clients never see an
+          # index that points at files not uploaded yet.
+          for f in pool/main/g/ghosts/*.deb key.gpg key.asc dists/stable/main/*/Packages* \
+                   dists/stable/Release dists/stable/Release.gpg dists/stable/InRelease; do
+            npx --yes wrangler@4.137.0 r2 object put "ghosts/apt/$f" --file "$f" --remote
+          done

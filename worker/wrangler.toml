@@ -1,0 +1,15 @@
+# ghosts.xamjiang.com: the install script and the APT repository.
+# Deploy with: npx wrangler@4.137.0 deploy (from this directory)
+name = "ghosts"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = false
+
+routes = [{ pattern = "ghosts.xamjiang.com", custom_domain = true }]
+
+# The APT repository (keys under apt/), uploaded by the release workflow.
+r2_buckets = [{ binding = "BUCKET", bucket_name = "ghosts" }]
+
+# The install script is bundled into the Worker, so it is served from the
+# edge with no origin fetch.
+rules = [{ type = "Text", globs = ["**/*.sh", "**/*.html"], fallthrough = true }]

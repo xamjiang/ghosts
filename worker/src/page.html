@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghosts</title>
+<meta name="description" content="Find and stop forgotten dev servers and Docker containers.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<style>
+:root {
+  --bg: #fbfbfa; --fg: #1d1d1f; --sub: #6e6e73; --line: #e5e5e7;
+  --code-bg: #f2f2f0; --accent: #6d5dfc; --ok: #1f9d55;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111113; --fg: #ececf0; --sub: #9a9aa3; --line: #2a2a2e;
+    --code-bg: #1b1b1f; --accent: #9d92ff; --ok: #4ade80;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+}
+main { max-width: 680px; margin: 0 auto; padding: 72px 16px 56px; }
+h1 { font-size: 40px; line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
+.lede { color: var(--sub); font-size: 18px; margin: 0 0 40px; }
+h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sub); margin: 48px 0 12px; font-weight: 600; }
+code, pre { font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.cmd {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 14px 14px 18px;
+}
+.cmd code { flex: 1; overflow-x: auto; white-space: nowrap; }
+.cmd code::before { content: "$ "; color: var(--sub); }
+button {
+  font: inherit; font-size: 13px; cursor: pointer; flex: none;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+  border-radius: 8px; padding: 6px 12px;
+}
+button:hover { border-color: var(--sub); }
+button.copied { color: var(--ok); border-color: var(--ok); }
+pre {
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 18px; overflow-x: auto; margin: 0;
+}
+table { width: 100%; border-collapse: collapse; }
+td { padding: 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+td:first-child { width: 34%; font-weight: 600; padding-right: 16px; }
+td span { color: var(--sub); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+footer { margin-top: 56px; color: var(--sub); font-size: 14px; display: flex; gap: 20px; flex-wrap: wrap; }
+@media (max-width: 520px) {
+  main { padding-top: 48px; }
+  h1 { font-size: 32px; }
+  td { display: block; width: auto !important; padding: 4px 0; border: 0; }
+  tr { display: block; padding: 10px 0; border-bottom: 1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>👻 Ghosts</h1>
+  <p class="lede">Find the dev servers and Docker containers you forgot to stop, see what they cost in CPU, memory and power, and stop them. For macOS and Linux.</p>
+
+  <div class="cmd">
+    <code id="install">curl -fsSL https://ghosts.xamjiang.com/install | bash</code>
+    <button type="button" data-copy="install">Copy</button>
+  </div>
+
+  <h2>What the script does</h2>
+  <table>
+    <tr><td>Ubuntu, Debian</td><td>Adds the ghosts APT repository and installs the package. <span>Asks for your sudo password. Updates with <code>apt upgrade</code>.</span></td></tr>
+    <tr><td>With Homebrew</td><td>Runs <code>brew install xamjiang/tap/ghosts</code>. <span>Updates with <code>brew upgrade</code>.</span></td></tr>
+    <tr><td>Anything else</td><td>Downloads the release binary, verifies its checksum and puts it in <code>~/.local/bin</code>. <span>Run the script again to update.</span></td></tr>
+  </table>
+  <p><a href="/install.sh">Read the script</a> before you run it.</p>
+
+  <h2 id="apt">Set up APT yourself</h2>
+  <pre id="apt-cmds">sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://ghosts.xamjiang.com/apt/key.gpg | sudo tee /etc/apt/keyrings/ghosts.gpg >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/ghosts.gpg] https://ghosts.xamjiang.com/apt stable main" | sudo tee /etc/apt/sources.list.d/ghosts.list
+sudo apt update && sudo apt install ghosts</pre>
+
+  <footer>
+    <a href="https://github.com/xamjiang/ghosts">GitHub</a>
+    <a href="https://github.com/xamjiang/ghosts/releases">Releases</a>
+    <span>MIT License</span>
+  </footer>
+</main>
+<script>
+document.querySelectorAll("[data-copy]").forEach((b) => {
+  b.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent);
+      b.textContent = "Copied";
+      b.classList.add("copied");
+      setTimeout(() => { b.textContent = "Copy"; b.classList.remove("copied"); }, 1600);
+    } catch {}
+  });
+});
+</script>
+</body>
+</html>

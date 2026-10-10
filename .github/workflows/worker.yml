@@ -1,0 +1,22 @@
+name: Worker
+
+# Deploy ghosts.xamjiang.com when the Worker or the install script it serves
+# changes.
+on:
+  push:
+    branches: [main]
+    paths: ["worker/**", "packaging/install.sh"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v7
+      - name: Deploy
+        working-directory: worker
+        run: npx --yes wrangler@4.137.0 deploy
