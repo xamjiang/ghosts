@@ -5,6 +5,8 @@ package docker
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -69,7 +71,8 @@ type Client struct {
 }
 
 // New finds the Docker socket the same way users expect the CLI to: DOCKER_HOST
-// first, then the usual Docker Desktop / OrbStack / Colima locations.
+// first, then the current docker context, then the usual Docker Desktop /
+// OrbStack / Colima locations.
 func New() *Client {
 	sock := findSocket()
 	dial := func(ctx context.Context, _, _ string) (net.Conn, error) {
@@ -88,9 +91,13 @@ func findSocket() string {
 	if h := os.Getenv("DOCKER_HOST"); strings.HasPrefix(h, "unix://") {
 		return strings.TrimPrefix(h, "unix://")
 	}
+	if s := contextSocket(); s != "" {
+		return s
+	}
 	home, _ := os.UserHomeDir()
 	candidates := []string{
 		filepath.Join(home, ".docker/run/docker.sock"),
+		filepath.Join(home, ".docker/desktop/docker.sock"), // Docker Desktop for Linux
 		filepath.Join(home, ".orbstack/run/docker.sock"),
 		filepath.Join(home, ".colima/default/docker.sock"),
 		filepath.Join(home, ".rd/docker.sock"),
@@ -102,6 +109,51 @@ func findSocket() string {
 		}
 	}
 	return "/var/run/docker.sock"
+}
+
+// contextSocket returns the socket of the docker CLI's current context
+// ("docker context use"), which matters when several engines are installed,
+// e.g. Docker Engine and Docker Desktop side by side on Linux.
+func contextSocket() string {
+	dir := os.Getenv("DOCKER_CONFIG")
+	if dir == "" {
+		home, _ := os.UserHomeDir()
+		dir = filepath.Join(home, ".docker")
+	}
+	name := os.Getenv("DOCKER_CONTEXT")
+	if name == "" {
+		var cfg struct {
+			CurrentContext string `json:"currentContext"`
+		}
+		if b, err := os.ReadFile(filepath.Join(dir, "config.json")); err == nil {
+			json.Unmarshal(b, &cfg)
+		}
+		name = cfg.CurrentContext
+	}
+	if name == "" || name == "default" {
+		return ""
+	}
+	// Context metadata lives in a directory named by the SHA-256 of its name.
+	sum := sha256.Sum256([]byte(name))
+	b, err := os.ReadFile(filepath.Join(dir, "contexts", "meta", hex.EncodeToString(sum[:]), "meta.json"))
+	if err != nil {
+		return ""
+	}
+	var meta struct {
+		Endpoints struct {
+			Docker struct {
+				Host string `json:"Host"`
+			} `json:"docker"`
+		} `json:"Endpoints"`
+	}
+	if json.Unmarshal(b, &meta) != nil {
+		return ""
+	}
+	h, ok := strings.CutPrefix(meta.Endpoints.Docker.Host, "unix://")
+	if !ok {
+		return ""
+	}
+	return h
 }
 
 func (c *Client) do(ctx context.Context, method, path string) (*http.Response, error) {

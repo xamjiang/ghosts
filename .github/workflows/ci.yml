@@ -7,8 +7,12 @@ on:
 
 jobs:
   test:
-    # cgo uses macOS-only APIs (libproc), so this can only build on macOS.
-    runs-on: macos-latest
+    # Each OS has its own process backend: cgo + libproc on macOS, /proc and
+    # netlink on Linux. Both have to be built and tested natively.
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7

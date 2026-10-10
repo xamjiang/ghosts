@@ -6,11 +6,19 @@ AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker �
 
 ## 安裝
 
+**macOS**（13 以上，Apple Silicon 和 Intel 都支援）：
+
 ```sh
 brew install xamjiang/tap/ghosts
 ```
 
-需要 macOS 13 以上，同時支援 Apple Silicon 和 Intel。安裝後在終端機輸入：
+**Linux**（amd64 / arm64）：目前先從原始碼安裝，需要 Go：
+
+```sh
+go install github.com/xamjiang/ghosts/cmd/ghosts@latest
+```
+
+安裝後在終端機輸入：
 
 ```sh
 ghosts
@@ -34,11 +42,13 @@ ghosts
 | `x` / `X` | 停止 / 強制停止（程序、容器或整個 compose 專案） |
 | `o` | 用瀏覽器開啟 |
 | `/` | 過濾（port、名稱、專案、image） |
-| `a` | 顯示 App 與 macOS 系統服務 |
+| `a` | 顯示 App 與系統服務 |
 | `s` | 排序：port / 耗電 / 記憶體 / 最新 / 名稱 |
 | `?` | 說明 |
 
 ## 運作方式
+
+以下是 macOS 的做法，Linux 的差異列在下一節。
 
 - **Port**：不呼叫 `lsof`，而是直接透過 `sysctl` 和 libproc 讀取 kernel 的資料：一次 sysctl 取得整個程序表，再列舉你自己程序的 socket。一次掃描約 2ms，不會 fork 任何外部程式。程序的指令和工作目錄依 PID 快取。
 - **資源使用**：用 `proc_pid_rusage` 讀取每個程序累計的 CPU 時間、記憶體（和活動監視器的「記憶體」欄一致）和能耗。能耗計數器只有 Apple Silicon 才有，Intel Mac 上會隱藏 POWER 欄。每個服務的數值包含它的子程序，速率取最近約 6 秒的平均。
@@ -46,9 +56,17 @@ ghosts
 - **Docker**：直接連 Docker Engine 的 unix socket（支援 Docker Desktop、OrbStack、Colima），訂閱事件串流即時更新。由 Docker 對外開的 port 會對應回實際的容器，停止時執行的是 `docker stop`，不會誤殺 Docker Desktop。
 - **停止程序**：先送 SIGTERM，3 秒內沒結束才會詢問是否 SIGKILL；送出前會比對程序啟動時間，避免 PID 被重複使用時誤殺其他程序。
 
+### Linux 上的差異
+
+- **Port**：用 netlink（sock_diag，和 `ss` 相同的機制）只向 kernel 要 LISTEN 狀態的 socket，再從 `/proc/<pid>/fd` 對應回程序。對應結果會快取，只有出現新的 socket 時才重新查，或每 30 秒更新一次。程序表、CPU 和記憶體都來自 `/proc/<pid>/stat`，一次掃描約 4ms，一樣不 fork 任何外部程式。
+- **資源使用**：記憶體是 RSS（和 `top` 的 RES 一致）。Linux 沒有每個程序的能耗計數器，也不提供每個程序的 wakeup 次數，所以會隱藏 POWER 欄和 Wakeups。
+- **被遺忘的程序**：關掉終端機或 SSH 後留下的 server，會被 PID 1 或使用者的 `systemd --user` 收養。Ghosts 會看它的 cgroup：如果還留在原本 session 的 `*.scope`，就標記為「detached」；由 systemd 正常啟動的服務（`*.service`）則不會被誤判。
+- **Docker**：會依照 `docker context` 目前選的 context 決定要連哪個 socket，所以 Docker Engine 和 Docker Desktop 並存時，看到的會和 `docker ps` 一樣。Docker Engine 的容器直接跑在主機上，沒有 VM，這時摘要列會改成所有容器的 CPU 和記憶體加總。
+- **開啟瀏覽器**：用 `xdg-open`。透過 SSH 連線時，改用 OSC 52 把網址複製到你本機的剪貼簿（需要終端機支援，例如 iTerm2、Ghostty、kitty）。
+
 ## 自身資源佔用
 
-在 M 系列 Mac 上，以預設每 2 秒掃描一次：CPU 約佔一顆核心的 1%、耗電約 3mW、記憶體約 15MB。終端機視窗失去焦點時，掃描頻率會降到三分之一。想再更省的話，可以用 `-interval 5s`。
+在 M 系列 Mac 上，以預設每 2 秒掃描一次：CPU 約佔一顆核心的 1%、耗電約 3mW、記憶體約 15MB。在 Linux（i7-8700、約 400 個程序）上：CPU 約 0.9%、記憶體約 19MB。終端機視窗失去焦點時，掃描頻率會降到三分之一。想再更省的話，可以用 `-interval 5s`。
 
 ## 開發
 
@@ -57,7 +75,13 @@ go build -o bin/ghosts ./cmd/ghosts && ./bin/ghosts
 go test ./...
 ```
 
-因為用到 macOS 的 libproc，需要 cgo（安裝 Xcode Command Line Tools 即可）。
+macOS 版用到 libproc，需要 cgo（安裝 Xcode Command Line Tools 即可）。Linux 版不需要 cgo，可以在 Mac 上直接交叉編譯：
+
+```sh
+GOOS=linux GOARCH=amd64 go build -o bin/ghosts-linux ./cmd/ghosts
+```
+
+平台相關的程式碼用檔名區分：`internal/ports/*_darwin.go`、`*_linux.go`，以及 `internal/ui/platform_*.go`。
 
 ## 發佈新版本
 

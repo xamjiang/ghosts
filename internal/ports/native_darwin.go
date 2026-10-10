@@ -70,11 +70,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-type socket struct {
-	pid, port int
-	addr      string // "*" for any address, like lsof
-}
-
 // listenSockets returns the TCP listening sockets of the given processes.
 func listenSockets(pids []int) []socket {
 	if len(pids) == 0 {
@@ -112,19 +107,9 @@ func cwd(pid int) string {
 	return C.GoString(&buf[0])
 }
 
-// procTable is one snapshot of every process, from a single sysctl. It feeds
-// socket discovery (our own processes), parent names, child trees and the
-// container VM lookup.
-type procTable struct {
-	own      []int
-	ppid     map[int]int
-	children map[int][]int
-	started  map[int]time.Time
-	comm     map[int]string
-}
-
+// readProcTable reads every process with a single sysctl.
 func readProcTable() (procTable, error) {
-	t := procTable{ppid: map[int]int{}, children: map[int][]int{}, started: map[int]time.Time{}, comm: map[int]string{}}
+	t := newProcTable()
 	kps, err := unix.SysctlKinfoProcSlice("kern.proc.all")
 	if err != nil {
 		return t, err
@@ -132,23 +117,21 @@ func readProcTable() (procTable, error) {
 	uid := uint32(os.Getuid())
 	for i := range kps {
 		kp := &kps[i]
-		pid := int(kp.Proc.P_pid)
-		ppid := int(kp.Eproc.Ppid)
-		t.ppid[pid] = ppid
-		if pid != ppid {
-			t.children[ppid] = append(t.children[ppid], pid)
-		}
 		tv := kp.Proc.P_starttime
-		t.started[pid] = time.Unix(tv.Sec, int64(tv.Usec)*1000)
 		c := kp.Proc.P_comm[:]
 		n := 0
 		for n < len(c) && c[n] != 0 {
 			n++
 		}
-		t.comm[pid] = string(c[:n])
-		if kp.Eproc.Ucred.Uid == uid && pid > 0 {
-			t.own = append(t.own, pid)
-		}
+		t.add(int(kp.Proc.P_pid), int(kp.Eproc.Ppid), time.Unix(tv.Sec, int64(tv.Usec)*1000),
+			string(c[:n]), kp.Eproc.Ucred.Uid == uid)
 	}
 	return t, nil
 }
+
+// initName is what the PID 1 parent of a detached process is called.
+const initName = "launchd"
+
+// detached reports whether a process lost its session: on macOS orphans are
+// always adopted by launchd.
+func detached(pid, ppid int, t procTable) bool { return ppid == 1 }

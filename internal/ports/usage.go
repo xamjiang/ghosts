@@ -1,16 +1,5 @@
 package ports
 
-/*
-#include <libproc.h>
-#include <sys/resource.h>
-#include <mach/mach_time.h>
-
-static int sm_rusage(int pid, struct rusage_info_v6 *ri) {
-	return proc_pid_rusage(pid, RUSAGE_INFO_V6, (rusage_info_t *)ri);
-}
-*/
-import "C"
-
 import (
 	"strings"
 	"sync"
@@ -21,11 +10,11 @@ import (
 // measured over the last few scans, the same way Activity Monitor does.
 type Usage struct {
 	CPU      float64 // percent of one core
-	Mem      uint64  // physical footprint in bytes (Activity Monitor's "Memory")
+	Mem      uint64  // physical footprint (macOS, like Activity Monitor) or resident set (Linux), in bytes
 	Power    float64 // watts, recent
 	AvgPower float64 // watts, averaged over each process's lifetime
 	Energy   float64 // joules used since start
-	Wakeups  float64 // idle wakeups per second
+	Wakeups  float64 // idle wakeups per second (macOS only)
 	Procs    int     // processes counted
 	Ready    bool    // rates need two samples; false on the first scan
 }
@@ -45,11 +34,20 @@ func (u *Usage) add(o Usage) {
 // that is at most this old, so a 2s scan shows a ~6s average.
 const rateWindow = 6 * time.Second
 
-type sample struct {
-	at       time.Time
+// counters are a process's cumulative counters plus its current memory.
+type counters struct {
 	cpuNs    float64
-	energyNJ float64
+	energyNJ float64 // 0 where the OS doesn't attribute energy per process
 	wakeups  float64
+	mem      uint64
+}
+
+// counterReader reads one process's counters, given the current table.
+type counterReader func(pid int, t procTable) (counters, bool)
+
+type sample struct {
+	at time.Time
+	counters
 }
 
 type procHist struct {
@@ -57,20 +55,18 @@ type procHist struct {
 	samples []sample
 }
 
-// sampler turns cumulative counters from proc_pid_rusage into rates. One
-// call costs ~25µs and needs no subprocess, so sampling every listener and
+// sampler turns cumulative per-process counters into rates. Reading them
+// costs microseconds and needs no subprocess, so sampling every listener and
 // its children on each scan is effectively free.
 type sampler struct {
 	mu        sync.Mutex
 	hist      map[int]*procHist
-	timebase  float64 // mach ticks → ns
-	hasEnergy bool    // ri_energy_nj is only populated on Apple silicon
+	read      counterReader
+	hasEnergy bool // energy is only attributed per process on Apple silicon
 }
 
 func newSampler() *sampler {
-	var tb C.mach_timebase_info_data_t
-	C.mach_timebase_info(&tb)
-	return &sampler{hist: map[int]*procHist{}, timebase: float64(tb.numer) / float64(tb.denom)}
+	return &sampler{hist: map[int]*procHist{}, read: newCounterReader()}
 }
 
 // tree returns pid and all its descendants (bounded, in case of fork bombs).
@@ -89,20 +85,15 @@ func (s *sampler) measure(pids map[int]bool, t procTable) map[int]Usage {
 	now := time.Now()
 	out := make(map[int]Usage, len(pids))
 	for pid := range pids {
-		var ri C.struct_rusage_info_v6
-		if C.sm_rusage(C.int(pid), &ri) != 0 {
+		c, ok := s.read(pid, t)
+		if !ok {
 			continue // gone, or not ours
 		}
-		cur := sample{
-			at:       now,
-			cpuNs:    float64(ri.ri_user_time+ri.ri_system_time) * s.timebase,
-			energyNJ: float64(ri.ri_energy_nj),
-			wakeups:  float64(ri.ri_pkg_idle_wkups + ri.ri_interrupt_wkups),
-		}
+		cur := sample{at: now, counters: c}
 		if cur.energyNJ > 0 {
 			s.hasEnergy = true
 		}
-		u := Usage{Mem: uint64(ri.ri_phys_footprint), Energy: cur.energyNJ / 1e9, Procs: 1}
+		u := Usage{Mem: c.mem, Energy: cur.energyNJ / 1e9, Procs: 1}
 		started := t.started[pid]
 		if life := now.Sub(started).Seconds(); !started.IsZero() && life > 1 {
 			u.AvgPower = u.Energy / life

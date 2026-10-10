@@ -133,6 +133,16 @@ func (m *Model) totalUsage() (u ports.Usage) {
 	return u
 }
 
+// containerUsage sums the CPU and memory of running containers.
+func (m *Model) containerUsage() (u ports.Usage) {
+	for _, c := range m.containers {
+		u.CPU += c.CPU
+		u.Mem += c.Mem
+		u.Ready = u.Ready || c.UsageReady
+	}
+	return u
+}
+
 func displayName(r row) string {
 	if r.ctr != nil {
 		return r.ctr.Name

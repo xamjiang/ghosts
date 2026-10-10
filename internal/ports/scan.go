@@ -1,5 +1,5 @@
-// Package ports discovers TCP listeners on macOS and describes the processes
-// behind them in human terms (project directory, friendly name, uptime).
+// Package ports discovers TCP listeners on macOS and Linux and describes the
+// processes behind them in human terms (project directory, friendly name, uptime).
 package ports
 
 import (
@@ -32,6 +32,7 @@ type Listener struct {
 	Cwd        string
 	Started    time.Time
 	ParentName string
+	Detached   bool // orphaned: its terminal or agent session is gone
 
 	Name    string // friendly display name, e.g. "vite"
 	Runtime string // e.g. "node", "python"; empty for native binaries
@@ -44,10 +45,11 @@ type Listener struct {
 
 // Snapshot is the result of one scan.
 type Snapshot struct {
-	Listeners []Listener
-	Procs     map[int]Usage // per PID, for totals that don't double count
-	VM        Usage         // the VM that runs containers (Docker Desktop, OrbStack…)
-	HasEnergy bool          // energy counters exist (Apple silicon)
+	Listeners  []Listener
+	Procs      map[int]Usage // per PID, for totals that don't double count
+	VM         Usage         // the VM that runs containers (Docker Desktop, OrbStack…)
+	HasEnergy  bool          // energy counters exist (Apple silicon)
+	HasWakeups bool          // wakeup counters exist (macOS)
 }
 
 // Key identifies a listener across scans.
@@ -76,7 +78,7 @@ func (l Listener) CommandLine() string {
 }
 
 // Scanner finds listening sockets and enriches them. It reads the kernel
-// directly (sysctl + libproc) instead of running lsof, so a scan takes a few
+// directly (sysctl + libproc on macOS, /proc on Linux) instead of running lsof, so a scan takes a few
 // milliseconds and spawns no processes. Slow-changing details (argv, working
 // directory) are cached by PID and start time.
 type Scanner struct {
@@ -127,9 +129,10 @@ func (s *Scanner) Scan() (Snapshot, error) {
 		live[l.PID] = true
 		l.PPID = table.ppid[l.PID]
 		l.Started, l.Comm, l.Exe, l.Args, l.Cwd = info.Started, info.Comm, info.Exe, info.Args, info.Cwd
+		l.Detached = detached(l.PID, l.PPID, table)
 		switch {
 		case l.PPID == 1:
-			l.ParentName = "launchd"
+			l.ParentName = initName
 		case l.PPID > 1:
 			l.ParentName = table.comm[l.PPID]
 		}
@@ -182,7 +185,7 @@ func (s *Scanner) measure(ls []Listener, table procTable) Snapshot {
 		pids[p] = true
 	}
 	per := s.usage.measure(pids, table)
-	snap := Snapshot{Listeners: ls, Procs: per, HasEnergy: s.usage.hasEnergy}
+	snap := Snapshot{Listeners: ls, Procs: per, HasEnergy: s.usage.hasEnergy, HasWakeups: hasWakeups}
 	for i := range ls {
 		for _, p := range ls[i].Tree {
 			if u, ok := per[p]; ok {

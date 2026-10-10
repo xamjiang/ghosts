@@ -141,7 +141,8 @@ func (m Model) viewHeader() string {
 }
 
 // summary is the total cost of what the current tab shows: the listed
-// processes, or the VM that runs every container.
+// processes, or the VM that runs every container. Where containers run
+// natively (Docker Engine on Linux) there is no VM, so their own stats add up.
 func (m Model) summary() []seg {
 	label, u := "Total", m.totalUsage()
 	if m.tab == tabContainers {
@@ -149,6 +150,9 @@ func (m Model) summary() []seg {
 			return nil
 		}
 		label, u = "Docker VM", m.vm
+		if !m.vm.Ready {
+			label, u = "Containers", m.containerUsage()
+		}
 	}
 	if !u.Ready {
 		return nil
@@ -821,9 +825,9 @@ func (m Model) viewDetail(w, h int, bordered bool) []string {
 		case ports.KindApp:
 			subtitle += " · App"
 		case ports.KindSystem:
-			subtitle += " · macOS"
+			subtitle += " · " + systemLabel
 		}
-		where, whereColor := "This Mac only", color.Color(nil)
+		where, whereColor := localOnly, color.Color(nil)
 		if l.Public() {
 			where, whereColor = "Your network (all interfaces)", m.th.orange
 		}
@@ -833,7 +837,7 @@ func (m Model) viewDetail(w, h int, bordered bool) []string {
 		}
 		rows = append(rows, kv{"Running", ago(time.Since(l.Started)) + " · since " + l.Started.Format("Jan 2, 15:04"), nil})
 		switch {
-		case l.PPID == 1 && l.Kind == ports.KindDev:
+		case l.Detached && l.Kind == ports.KindDev:
 			// Its terminal or agent session is gone; this is the classic
 			// forgotten background server.
 			rows = append(rows, kv{"Parent", "None · detached from its session", m.th.orange})
@@ -926,7 +930,7 @@ func (m Model) viewHelp(h int) []string {
 		}},
 		{"View", []item{
 			{"/", "Filter by port, name, project or image"},
-			{"a", "Include apps and macOS services"},
+			{"a", "Include apps and " + osName + " services"},
 			{"s", "Sort ports by port, energy, memory, newest or name"},
 			{"r", "Refresh now"},
 			{"q", "Quit Ghosts"},
@@ -1067,7 +1071,9 @@ func (m Model) processUsageKV(u ports.Usage) []kv {
 	if m.hasEnergy {
 		out = append(out, kv{"Power", powerText(u.Power) + " now · " + powerText(u.AvgPower) + " average", m.powerColor(u.Power)})
 	}
-	out = append(out, kv{"Wakeups", fmt.Sprintf("%.0f per second", u.Wakeups), nil})
+	if m.hasWakeups {
+		out = append(out, kv{"Wakeups", fmt.Sprintf("%.0f per second", u.Wakeups), nil})
+	}
 	if u.Procs > 1 {
 		out = append(out, kv{"", fmt.Sprintf("Includes %s", plural(u.Procs-1, "child process")), nil})
 	}
@@ -1075,14 +1081,14 @@ func (m Model) processUsageKV(u ports.Usage) []kv {
 }
 
 // vmKV explains where container energy goes: Docker can't attribute it per
-// container, but the VM that runs them all is an ordinary macOS process.
+// container, but the VM that runs them all is an ordinary process.
 func (m Model) vmKV() []kv {
 	if !m.vm.Ready {
 		return nil
 	}
-	v := bytesText(m.vm.Mem)
-	if m.hasEnergy {
-		v += " · " + powerText(m.vm.Power)
+	if !m.hasEnergy {
+		return []kv{{"Docker VM", bytesText(m.vm.Mem) + " · " + cpuText(m.vm.CPU) + " CPU", nil}}
 	}
+	v := bytesText(m.vm.Mem) + " · " + powerText(m.vm.Power)
 	return []kv{{"Docker VM", v, nil}, {"", "Power is measured for the whole VM", nil}}
 }

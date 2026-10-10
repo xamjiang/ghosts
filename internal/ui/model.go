@@ -4,7 +4,6 @@ package ui
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -90,6 +89,7 @@ type Model struct {
 	procs      map[int]ports.Usage
 	vm         ports.Usage
 	hasEnergy  bool
+	hasWakeups bool
 	portsErr   error
 	portsReady bool
 	scanning   bool
@@ -256,7 +256,8 @@ func (m *Model) update(msg tea.Msg) tea.Cmd {
 		if msg.err == nil {
 			m.markNew(msg.snap.Listeners, m.portsReady)
 			m.listeners = msg.snap.Listeners
-			m.procs, m.vm, m.hasEnergy = msg.snap.Procs, msg.snap.VM, msg.snap.HasEnergy
+			m.procs, m.vm = msg.snap.Procs, msg.snap.VM
+			m.hasEnergy, m.hasWakeups = msg.snap.HasEnergy, msg.snap.HasWakeups
 			m.portsReady = true
 		}
 		m.rebuild()
@@ -656,10 +657,11 @@ func (m *Model) open() tea.Cmd {
 	if u == "" {
 		return m.showToast("Nothing to open here", toastInfo)
 	}
-	if err := exec.Command("open", u).Start(); err != nil {
+	cmd, verb, err := openURL(u)
+	if err != nil {
 		return m.showToast(err.Error(), toastErr)
 	}
-	return m.showToast("Opened "+strings.TrimPrefix(u, "http://"), toastInfo)
+	return tea.Batch(cmd, m.showToast(verb+" "+strings.TrimPrefix(u, "http://"), toastInfo))
 }
 
 func (m *Model) askStop(force bool) {
@@ -700,7 +702,7 @@ func confirmStop(l ports.Listener, force bool) *confirm {
 	}
 	switch l.Kind {
 	case ports.KindSystem:
-		c.warn, c.danger = "This is part of macOS and may restart on its own.", true
+		c.warn, c.danger = "This is a system service and may restart on its own.", true
 	case ports.KindApp:
 		c.warn = "This belongs to an app; stopping it may break that app."
 	}
