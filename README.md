@@ -2,37 +2,33 @@
 
 找出背景裡被遺忘的 dev server 和 Docker 容器，看它們吃了多少 CPU、記憶體和電，並直接關掉。
 
-AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker 服務，結束後卻沒關。Ghosts 讓你一眼看到這些「幽靈」。
-
-## 安裝
-
-macOS（13 以上）和 Linux（amd64 / arm64）都用同一行：
-
 ```sh
 curl -fsSL https://ghosts.xamjiang.com/install | bash
 ```
 
-Script 會用系統原本的套件管理器安裝，所以之後的更新方式和其他軟體一樣：
+裝好後在終端機輸入 `ghosts` 就能開始。支援 macOS 13 以上和 Linux（amd64 / arm64）。
 
-| 系統 | 安裝方式 | 更新 |
-|---|---|---|
-| Ubuntu、Debian | 加入 ghosts 的 APT repo，再 `apt install`（會要 sudo 密碼） | `sudo apt update && sudo apt upgrade` |
-| 有 Homebrew | `brew install xamjiang/tap/ghosts` | `brew upgrade ghosts` |
-| 其他 | 下載 binary、驗證 checksum，裝到 `~/.local/bin` | 再跑一次上面那行 |
+AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker 服務，結束後卻沒關。Ghosts 讓你一眼看到這些「幽靈」。
 
-想先看 script 內容：[ghosts.xamjiang.com/install.sh](https://ghosts.xamjiang.com/install.sh)。也可以直接用 `brew install xamjiang/tap/ghosts`，或自己設定 APT：
+## 安裝細節
+
+上面那行 script 會用系統原本的套件管理器安裝，所以之後的更新方式和其他軟體一樣：
+
+| 系統 | 安裝方式 | 更新 | 移除 |
+|---|---|---|---|
+| Ubuntu、Debian | 加入 ghosts 的 APT repo，再 `apt install`（會要 sudo 密碼） | `sudo apt update && sudo apt upgrade` | `sudo apt remove ghosts` |
+| 有 Homebrew | `brew install xamjiang/tap/ghosts` | `brew upgrade ghosts` | `brew uninstall ghosts` |
+| 其他 | 下載 binary、驗證 checksum，裝到 `~/.local/bin` | 再跑一次安裝指令 | `rm ~/.local/bin/ghosts` |
+
+想先看 script 內容：[ghosts.xamjiang.com/install.sh](https://ghosts.xamjiang.com/install.sh)。
+
+不想用 script 的話，可以直接 `brew install xamjiang/tap/ghosts`、從 [Releases](https://github.com/xamjiang/ghosts/releases) 下載，或自己設定 APT：
 
 ```sh
 sudo install -d -m 0755 /etc/apt/keyrings
 curl -fsSL https://ghosts.xamjiang.com/apt/key.gpg | sudo tee /etc/apt/keyrings/ghosts.gpg >/dev/null
 echo "deb [signed-by=/etc/apt/keyrings/ghosts.gpg] https://ghosts.xamjiang.com/apt stable main" | sudo tee /etc/apt/sources.list.d/ghosts.list
 sudo apt update && sudo apt install ghosts
-```
-
-安裝後在終端機輸入：
-
-```sh
-ghosts
 ```
 
 ## 參數
