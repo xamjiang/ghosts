@@ -894,7 +894,7 @@ func (m Model) viewDetail(w, h int, bordered bool) []string {
 		if block != "" {
 			add()
 			add(m.s(extraLabel, m.th.faint))
-			for _, ln := range strings.Split(ansi.Wrap(block, inner, " /"), "\n") {
+			for _, ln := range wrapCommand(block, inner) {
 				add(m.s(ln, m.th.sub))
 			}
 		}

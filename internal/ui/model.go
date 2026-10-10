@@ -799,5 +799,8 @@ func plural(n int, word string) string {
 	if n == 1 {
 		return "1 " + word
 	}
+	if strings.HasSuffix(word, "s") {
+		return fmt.Sprintf("%d %ses", n, word)
+	}
 	return fmt.Sprintf("%d %ss", n, word)
 }

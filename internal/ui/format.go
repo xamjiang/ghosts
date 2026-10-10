@@ -147,3 +147,51 @@ func powerText(w float64) string {
 	}
 	return fmt.Sprintf("%.1f W", w)
 }
+
+// wrapCommand wraps a command line to w cells, breaking after spaces and
+// slashes. Unlike ansi.Wrap it never breaks at a hyphen, which would split
+// flags like "--port" across lines; a word longer than a line is cut.
+func wrapCommand(s string, w int) []string {
+	if w < 1 {
+		return []string{s}
+	}
+	var lines []string
+	var cur []rune
+	flush := func() {
+		lines = append(lines, strings.TrimRight(string(cur), " "))
+		cur = cur[:0]
+	}
+	rs := []rune(s)
+	for len(rs) > 0 {
+		// The next piece runs up to and including a breakpoint.
+		n := 0
+		for n < len(rs) && rs[n] != ' ' && rs[n] != '/' {
+			n++
+		}
+		n = min(n+1, len(rs))
+		piece := rs[:n]
+		rs = rs[n:]
+		for len(piece) > 0 {
+			room := w - len(cur)
+			fits := len(piece)
+			if piece[len(piece)-1] == ' ' {
+				fits-- // a trailing space may hang past the edge
+			}
+			switch {
+			case fits <= room:
+				cur = append(cur, piece...)
+				piece = nil
+			case len(cur) > 0:
+				flush()
+			default:
+				cur = append(cur, piece[:w]...)
+				piece = piece[w:]
+				flush()
+			}
+		}
+	}
+	if len(cur) > 0 || len(lines) == 0 {
+		flush()
+	}
+	return lines
+}
