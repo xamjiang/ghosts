@@ -55,9 +55,9 @@ AI coding tools like Claude Code and Codex start dev servers and Docker services
 
 ### 🛑 Stops things safely
 
-<img align="right" src="docs/images/stop.svg" alt="Pressing x shows a confirmation; y stops vite and shows Stopped vite · port 5173 is free" width="58%">
+<img align="right" src="docs/images/stop.svg" alt="Pressing x shows a confirmation; enter stops vite and shows Stopped vite · port 5173 is free" width="58%">
 
-Press <kbd>x</kbd> to stop, <kbd>X</kbd> to force stop.
+Press <kbd>x</kbd> to stop or <kbd>X</kbd> to force stop, then <kbd>⏎</kbd> to confirm.
 
 - Sends SIGTERM first, and only offers SIGKILL if the process is still alive after 3 seconds
 - Checks the process start time before signalling, so a reused PID never takes down the wrong process

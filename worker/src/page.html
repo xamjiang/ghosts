@@ -271,23 +271,34 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
   74%, 100% { transform: scaleX(.22); fill: #ff453a }
 }
 
-/* 4: ghosts lists it, x stops it, the row goes away */
-.s4 .key { opacity: 0; animation-name: key; }
-@keyframes key {
-  0%, 80% { opacity: 0; transform: translateY(6px) }
+/* 4: ghosts lists it, x asks, enter stops it, the row goes away */
+.s4 .key { opacity: 0; }
+.s4 .kx { animation-name: kx; }
+@keyframes kx {
+  0%, 78.5% { opacity: 0; transform: translateY(6px) }
+  79.5% { opacity: 1; transform: none }
+  80.5% { transform: translateY(2px) scale(.92) }
   81.5% { opacity: 1; transform: none }
-  84% { transform: translateY(2px) scale(.94) }
-  85.5% { opacity: 1; transform: none }
+  83%, 100% { opacity: 0; transform: none }
+}
+.s4 .kenter { animation-name: kenter; }
+@keyframes kenter {
+  0%, 83% { opacity: 0; transform: translateY(6px) }
+  84% { opacity: 1; transform: none }
+  85.5% { transform: translateY(2px) scale(.92) }
+  86.5% { opacity: 1; transform: none }
   88%, 100% { opacity: 0; transform: none }
 }
+.s4 .ask { opacity: 0; animation-name: ask; }
+@keyframes ask { 0%, 80.5% { opacity: 0 } 81.5%, 86.5% { opacity: 1 } 87.5%, 100% { opacity: 0 } }
 .s4 .gone { animation-name: gone; }
-@keyframes gone { 0%, 86% { opacity: 1 } 88%, 100% { opacity: 0 } }
+@keyframes gone { 0%, 86.5% { opacity: 1 } 88.5%, 100% { opacity: 0 } }
 .s4 .up { animation-name: up; }
-@keyframes up { 0%, 87% { transform: none } 90%, 100% { transform: translateY(-22px) } }
+@keyframes up { 0%, 87.5% { transform: none } 90%, 100% { transform: translateY(-22px) } }
 
 @media (prefers-reduced-motion: reduce) {
   .story *, .story .scene::after { animation: none !important; }
-  .s4 .gone, .s4 .key { opacity: 0; }
+  .s4 .gone, .s4 .key, .s4 .ask { opacity: 0; }
   .s4 .up { transform: translateY(-22px); }
 }
 </style>
@@ -449,7 +460,7 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
 
     <figure class="step">
       <div class="scene">
-        <svg class="s4" viewBox="0 0 300 190" role="img" aria-label="Ghosts lists vite on port 5173 as detached; pressing x stops it and frees the port">
+        <svg class="s4" viewBox="0 0 300 190" role="img" aria-label="Ghosts lists vite on port 5173 as detached; pressing x and then enter stops it and frees the port">
           <g class="root a">
             <g class="a" style="animation-name:at75">
               <rect x="20" y="22" width="260" height="146" rx="10" fill="#1c1c1e" stroke="#fff" stroke-opacity=".08"/>
@@ -468,10 +479,18 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
                 </g>
               </g>
             </g>
-            <g class="key a">
-              <rect x="136" y="134" width="28" height="26" rx="6" fill="#2c2c30" stroke="#5a5a62"/>
-              <rect x="136" y="134" width="28" height="23" rx="6" fill="#3a3a40"/>
-              <text class="mono" x="150" y="150.5" font-size="13" fill="#f5f5f7" text-anchor="middle">x</text>
+            <g class="ask a">
+              <text class="mono" x="34" y="156" font-size="11" fill="#f5f5f7"><tspan fill="#0a84ff">▍</tspan><tspan font-weight="600">Stop vite?</tspan>  <tspan fill="#0a84ff" font-weight="600">⏎</tspan><tspan fill="#98989d"> Stop</tspan></text>
+            </g>
+            <g class="key kx a">
+              <rect x="232" y="138" width="30" height="26" rx="6" fill="#2c2c30" stroke="#5a5a62"/>
+              <rect x="232" y="138" width="30" height="23" rx="6" fill="#3a3a40"/>
+              <text class="mono" x="247" y="154.5" font-size="13" fill="#f5f5f7" text-anchor="middle">x</text>
+            </g>
+            <g class="key kenter a">
+              <rect x="232" y="138" width="30" height="26" rx="6" fill="#2c2c30" stroke="#5a5a62"/>
+              <rect x="232" y="138" width="30" height="23" rx="6" fill="#3a3a40"/>
+              <text x="247" y="154.5" font-size="13" fill="#f5f5f7" text-anchor="middle">⏎</text>
             </g>
             <g class="a" style="animation-name:at89">
               <text class="mono" x="34" y="156" font-size="11" fill="#30d158">✓ <tspan fill="#d1d1d6">Stopped vite · port 5173 is free</tspan></text>
@@ -482,7 +501,7 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
       <figcaption>
         <span class="n">04</span>
         <h4><span class="en">Ghosts finds it</span><span class="zh" lang="zh-Hant">Ghosts 找到它</span></h4>
-        <p><span class="en">It's marked detached. Press <kbd>x</kbd> and the port is free.</span><span class="zh" lang="zh-Hant">它被標成 detached，按 <kbd>x</kbd>，port 就空出來了。</span></p>
+        <p><span class="en">It's marked detached. Press <kbd>x</kbd>, then <kbd>⏎</kbd>, and the port is free.</span><span class="zh" lang="zh-Hant">它被標成 detached，按 <kbd>x</kbd> 再按 <kbd>⏎</kbd>，port 就空出來了。</span></p>
       </figcaption>
     </figure>
   </div>
@@ -537,7 +556,7 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
         <li>App 和系統服務預設隱藏，要停之前會多一句警告</li>
       </ul>
     </div>
-    <div class="art"><img src="/images/stop.svg" width="999" height="435" loading="lazy" alt="Pressing x shows a confirmation; y stops vite and shows Stopped vite · port 5173 is free"></div>
+    <div class="art"><img src="/images/stop.svg" width="999" height="435" loading="lazy" alt="Pressing x shows a confirmation; enter stops vite and shows Stopped vite · port 5173 is free"></div>
   </div>
 </section>
 
