@@ -3,106 +3,662 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ghosts</title>
-<meta name="description" content="Find and stop forgotten dev servers and Docker containers.">
+<title>Ghosts: find the dev servers you forgot to stop</title>
+<meta name="description" content="Find the dev servers and Docker containers you forgot to stop, see what they cost in CPU, memory and power, and stop them with one key. For macOS and Linux.">
+<meta property="og:title" content="Ghosts">
+<meta property="og:description" content="Find the dev servers and Docker containers you forgot to stop, and stop them with one key.">
+<meta property="og:url" content="https://ghosts.xamjiang.com/">
+<meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<script>
+// Pick the language before the first paint: ?lang= wins, then the visitor's
+// own choice, then the browser's language.
+(function () {
+  var l = null;
+  try { l = new URLSearchParams(location.search).get("lang") || localStorage.getItem("ghosts-lang"); } catch (e) {}
+  if (l !== "en" && l !== "zh") {
+    l = /^zh\b/i.test((navigator.languages && navigator.languages[0]) || navigator.language || "") ? "zh" : "en";
+  }
+  document.documentElement.dataset.lang = l;
+  document.documentElement.lang = l === "zh" ? "zh-Hant" : "en";
+})();
+</script>
 <style>
 :root {
   --bg: #fbfbfa; --fg: #1d1d1f; --sub: #6e6e73; --line: #e5e5e7;
-  --code-bg: #f2f2f0; --accent: #6d5dfc; --ok: #1f9d55;
+  --card: #ffffff; --code-bg: #f2f2f0; --accent: #5e5ce6; --ok: #1f9d55;
+  --glow: rgba(94, 92, 230, .18);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111113; --fg: #ececf0; --sub: #9a9aa3; --line: #2a2a2e;
-    --code-bg: #1b1b1f; --accent: #9d92ff; --ok: #4ade80;
+  :root:not([data-theme="light"]) {
+    --bg: #0e0e11; --fg: #ececf0; --sub: #9a9aa3; --line: #26262b;
+    --card: #16161a; --code-bg: #18181c; --accent: #9d92ff; --ok: #4ade80;
+    --glow: rgba(94, 92, 230, .32);
     color-scheme: dark;
   }
 }
+:root[data-theme="dark"] {
+  --bg: #0e0e11; --fg: #ececf0; --sub: #9a9aa3; --line: #26262b;
+  --card: #16161a; --code-bg: #18181c; --accent: #9d92ff; --ok: #4ade80;
+  --glow: rgba(94, 92, 230, .32);
+  color-scheme: dark;
+}
+
+/* One page, two languages: the inactive one is hidden. */
+:root[data-lang="zh"] .en, :root:not([data-lang="zh"]) .zh { display: none !important; }
+
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--fg);
-  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  overflow-x: hidden;
 }
-main { max-width: 680px; margin: 0 auto; padding: 72px 16px 56px; }
-h1 { font-size: 40px; line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
-.lede { color: var(--sub); font-size: 18px; margin: 0 0 40px; }
-h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sub); margin: 48px 0 12px; font-weight: 600; }
-code, pre { font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-.cmd {
-  display: flex; align-items: center; gap: 12px;
-  background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
-  padding: 14px 14px 14px 18px;
-}
-.cmd code { flex: 1; overflow-x: auto; white-space: nowrap; }
-.cmd code::before { content: "$ "; color: var(--sub); }
+img { max-width: 100%; height: auto; display: block; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre, .mono { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; }
+code { font-size: .9em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.narrow { max-width: 720px; margin: 0 auto; }
+
+/* Header */
+header { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; }
+.logo { font-weight: 700; font-size: 18px; color: var(--fg); letter-spacing: -.01em; }
+.logo:hover { text-decoration: none; }
+nav { display: flex; align-items: center; gap: 8px; }
+nav a { color: var(--sub); font-size: 14px; padding: 6px 10px; }
+nav a:hover { color: var(--fg); text-decoration: none; }
 button {
   font: inherit; font-size: 13px; cursor: pointer; flex: none;
-  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+  border: 1px solid var(--line); background: var(--card); color: var(--fg);
   border-radius: 8px; padding: 6px 12px;
 }
 button:hover { border-color: var(--sub); }
-button.copied { color: var(--ok); border-color: var(--ok); }
+
+/* Hero */
+.hero { text-align: center; padding: 56px 0 8px; }
+.pill {
+  display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--sub);
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--card);
+}
+.pill b { color: var(--ok); font-weight: 600; }
+h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.035em; margin: 20px 0 16px; font-weight: 800; }
+:root[data-lang="zh"] h1 { letter-spacing: -.01em; line-height: 1.15; }
+.lede { color: var(--sub); font-size: clamp(17px, 2.2vw, 19px); margin: 0 auto 32px; max-width: 640px; }
+.cmd {
+  display: flex; align-items: center; gap: 12px; text-align: left;
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
+  padding: 10px 10px 10px 18px; max-width: 640px; margin: 0 auto;
+}
+.cmd code { flex: 1; overflow-x: auto; white-space: nowrap; font-size: 14px; }
+.cmd code::before { content: "$ "; color: var(--sub); }
+.copy .done, .copy.copied .idle { display: none; }
+.copy.copied .done { display: inline; }
+.copy.copied { color: var(--ok); border-color: var(--ok); }
+.meta { color: var(--sub); font-size: 13px; margin: 14px 0 0; }
+
+.shot { position: relative; margin: 48px auto 0; max-width: 1120px; }
+.shot::before {
+  content: ""; position: absolute; inset: 8% 10% 0; z-index: -1;
+  background: radial-gradient(closest-side, var(--glow), transparent); filter: blur(40px);
+}
+.shot img { width: 100%; }
+
+/* Sections */
+section { padding: 88px 0 0; }
+.eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; }
+:root[data-lang="zh"] .eyebrow { letter-spacing: .04em; }
+h2 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; letter-spacing: -.025em; margin: 0 0 12px; }
+h3 { font-size: 22px; line-height: 1.25; letter-spacing: -.015em; margin: 0 0 10px; }
+.head { text-align: center; margin-bottom: 40px; }
+.head p { color: var(--sub); margin: 0; font-size: 17px; }
+
+/* How a ghost is born */
+.story { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.step { margin: 0; }
+.scene {
+  position: relative; background: #141418; border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .06);
+}
+.scene::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1.5px #7d7bff; opacity: 0;
+  animation: active var(--cycle) infinite;
+}
+.step:nth-child(2) .scene::after { animation-delay: calc(var(--cycle) * -.75); }
+.step:nth-child(3) .scene::after { animation-delay: calc(var(--cycle) * -.5); }
+.step:nth-child(4) .scene::after { animation-delay: calc(var(--cycle) * -.25); }
+.scene svg { display: block; width: 100%; height: auto; }
+.step figcaption { padding: 14px 4px 0; }
+.step .n { font-size: 12px; font-weight: 600; color: var(--sub); font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.step h4 { font-size: 16px; margin: 2px 0 4px; letter-spacing: -.01em; }
+.step p { margin: 0; color: var(--sub); font-size: 14px; line-height: 1.5; }
+
+/* Features */
+.feature { display: grid; grid-template-columns: 5fr 7fr; gap: 48px; align-items: center; padding: 48px 0; border-top: 1px solid var(--line); }
+.head + .feature { border-top: 0; padding-top: 8px; }
+.feature.flip { grid-template-columns: 7fr 5fr; }
+.feature.flip .text { order: 2; }
+.feature.tall { grid-template-columns: 7fr 5fr; }
+.feature.tall .art img { max-width: 420px; margin: 0 auto; }
+.feature p { color: var(--sub); margin: 0 0 12px; }
+.feature ul { color: var(--sub); margin: 0; padding-left: 20px; }
+.feature li { margin: 6px 0; }
+.feature b, .feature strong { color: var(--fg); }
+kbd {
+  font: 12px/1 ui-monospace, "SF Mono", Menlo, monospace; padding: 3px 6px; border-radius: 5px;
+  border: 1px solid var(--line); border-bottom-width: 2px; background: var(--card); color: var(--fg);
+}
+
+/* Numbers */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.stat { background: var(--card); padding: 28px 24px; }
+.stat .v { font-size: 34px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+.stat .v small { font-size: 18px; font-weight: 600; color: var(--sub); margin-left: 2px; }
+.stat .l { color: var(--sub); font-size: 14px; margin-top: 6px; }
+.note { color: var(--sub); font-size: 14px; text-align: center; margin: 16px 0 0; }
+
+/* Install */
+table { width: 100%; border-collapse: collapse; }
+td { padding: 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+td:first-child { width: 30%; font-weight: 600; padding-right: 16px; }
+td .s { color: var(--sub); }
+.code-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 40px 0 12px; }
+.code-head h3.sm { margin: 0; }
 pre {
   background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
-  padding: 14px 18px; overflow-x: auto; margin: 0;
+  padding: 16px 18px; overflow-x: auto; margin: 0; font-size: 13.5px; line-height: 1.7;
 }
-table { width: 100%; border-collapse: collapse; }
-td { padding: 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-td:first-child { width: 34%; font-weight: 600; padding-right: 16px; }
-td span { color: var(--sub); }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-footer { margin-top: 56px; color: var(--sub); font-size: 14px; display: flex; gap: 20px; flex-wrap: wrap; }
-@media (max-width: 520px) {
-  main { padding-top: 48px; }
-  h1 { font-size: 32px; }
+h3.sm { font-size: 17px; margin: 40px 0 12px; }
+
+footer {
+  margin: 96px 0 0; padding: 28px 0 40px; border-top: 1px solid var(--line);
+  color: var(--sub); font-size: 14px; display: flex; gap: 20px; flex-wrap: wrap; justify-content: space-between;
+}
+footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
+
+@media (max-width: 960px) {
+  .story { grid-template-columns: repeat(2, 1fr); }
+  .feature, .feature.flip, .feature.tall { grid-template-columns: 1fr; gap: 24px; }
+  .feature.flip .text { order: 0; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .hero { padding-top: 32px; }
+  nav .gh { display: none; }
+  .story { grid-template-columns: 1fr; }
+  section { padding-top: 64px; }
+  .stat { padding: 20px 16px; }
+  .stat .v { font-size: 28px; }
   td { display: block; width: auto !important; padding: 4px 0; border: 0; }
-  tr { display: block; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--line); }
+}
+
+/* ── The storyboard's animation ─────────────────────────────────────────
+   Every scene runs on the same cycle; each step owns a quarter of it and
+   keeps its final state until the cycle ends and everything fades out.
+   Only opacity and transforms are animated, and the whole thing pauses
+   while it's off screen. Without motion, each scene shows its last frame. */
+.story { --cycle: 14s; }
+.story * { transform-box: fill-box; transform-origin: center; }
+.story .a { animation-duration: var(--cycle); animation-iteration-count: infinite; animation-fill-mode: both; animation-timing-function: ease-out; }
+.story.paused *, .story.paused .scene::after { animation-play-state: paused !important; }
+.story .root { animation-name: end; }
+
+@keyframes end { 0%, 95% { opacity: 1 } 100% { opacity: 0 } }
+@keyframes active { 0% { opacity: 0 } 2%, 23% { opacity: 1 } 25%, 100% { opacity: 0 } }
+@keyframes at2 { 0%, 2% { opacity: 0 } 4%, 100% { opacity: 1 } }
+@keyframes at11 { 0%, 11% { opacity: 0 } 13%, 100% { opacity: 1 } }
+@keyframes at16 { 0%, 16% { opacity: 0; transform: translateY(4px) } 18%, 100% { opacity: 1; transform: none } }
+@keyframes at25 { 0%, 25% { opacity: 0 } 27%, 100% { opacity: 1 } }
+@keyframes at58 { 0%, 58% { opacity: 0; transform: translateX(-6px) } 60%, 100% { opacity: 1; transform: none } }
+@keyframes at62 { 0%, 62% { opacity: 0; transform: translateX(-6px) } 64%, 100% { opacity: 1; transform: none } }
+@keyframes at75 { 0%, 75% { opacity: 0 } 77%, 100% { opacity: 1 } }
+@keyframes at78 { 0%, 78% { opacity: 0 } 79%, 100% { opacity: 1 } }
+@keyframes at89 { 0%, 89% { opacity: 0; transform: translateY(6px) } 91%, 100% { opacity: 1; transform: none } }
+
+/* 1: the agent types, npm runs, vite comes up */
+.s1 .cover { transform: translateX(170px); animation-name: type; }
+@keyframes type {
+  0%, 5% { transform: translateX(0); animation-timing-function: steps(22, end) }
+  10%, 100% { transform: translateX(170px) }
+}
+.s1 .cursor { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0 } }
+
+/* 2: the pointer closes the terminal; the port stays */
+.s2 .win { opacity: 0; animation-name: close; }
+@keyframes close {
+  0%, 25% { opacity: 0; transform: none }
+  27%, 37% { opacity: 1; transform: none }
+  42%, 100% { opacity: 0; transform: scale(.88) }
+}
+.s2 .pointer { opacity: 0; animation-name: point; animation-timing-function: ease-in-out; transform-box: view-box; transform-origin: 0 0; }
+@keyframes point {
+  0%, 26% { opacity: 0; transform: translate(230px, 150px) }
+  28% { opacity: 1; transform: translate(230px, 150px) }
+  34% { opacity: 1; transform: translate(34px, 36px) }
+  35% { transform: translate(34px, 36px) scale(.85) }
+  36%, 39% { opacity: 1; transform: translate(34px, 36px) }
+  42%, 100% { opacity: 0; transform: translate(34px, 36px) }
+}
+.s2 .ring { opacity: 0; animation-name: ring; }
+@keyframes ring {
+  0%, 35% { opacity: 0; transform: scale(1) }
+  35.5% { opacity: 1; transform: scale(1) }
+  39%, 100% { opacity: 0; transform: scale(3) }
+}
+.s2 .port { animation-name: at25; }
+.s2 .dot, .s3 .dot { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .25 } }
+.s2 .halo { opacity: 0; animation-name: halo; }
+@keyframes halo { 0%, 42% { opacity: 0 } 46%, 100% { opacity: 1 } }
+.s2 .ripple { opacity: 0; animation: ripple 2.4s ease-out infinite; }
+.s2 .r2 { animation-delay: -1.2s; }
+@keyframes ripple { 0% { opacity: .7; transform: scale(1) } 100% { opacity: 0; transform: scale(1.35, 2.2) } }
+
+/* 3: a ghost holds the port and drains the battery */
+.s3 .ghost { animation-name: rise; }
+@keyframes rise { 0%, 50% { opacity: 0; transform: translateY(14px) } 54%, 100% { opacity: 1; transform: none } }
+.s3 .float { animation: float 3.2s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-6px) } }
+.s3 .fill { transform: scaleX(.22); fill: #ff453a; transform-origin: left center; animation-name: drain; animation-timing-function: linear; }
+@keyframes drain {
+  0%, 60% { transform: scaleX(1); fill: #30d158 }
+  67% { fill: #ff9f0a }
+  74%, 100% { transform: scaleX(.22); fill: #ff453a }
+}
+
+/* 4: ghosts lists it, x stops it, the row goes away */
+.s4 .key { opacity: 0; animation-name: key; }
+@keyframes key {
+  0%, 80% { opacity: 0; transform: translateY(6px) }
+  81.5% { opacity: 1; transform: none }
+  84% { transform: translateY(2px) scale(.94) }
+  85.5% { opacity: 1; transform: none }
+  88%, 100% { opacity: 0; transform: none }
+}
+.s4 .gone { animation-name: gone; }
+@keyframes gone { 0%, 86% { opacity: 1 } 88%, 100% { opacity: 0 } }
+.s4 .up { animation-name: up; }
+@keyframes up { 0%, 87% { transform: none } 90%, 100% { transform: translateY(-22px) } }
+
+@media (prefers-reduced-motion: reduce) {
+  .story *, .story .scene::after { animation: none !important; }
+  .s4 .gone, .s4 .key { opacity: 0; }
+  .s4 .up { transform: translateY(-22px); }
 }
 </style>
 </head>
 <body>
-<main>
-  <h1>👻 Ghosts</h1>
-  <p class="lede">Find the dev servers and Docker containers you forgot to stop, see what they cost in CPU, memory and power, and stop them. For macOS and Linux.</p>
+<div class="wrap">
 
+<header>
+  <a class="logo" href="/">👻 Ghosts</a>
+  <nav>
+    <a href="#install"><span class="en">Install</span><span class="zh" lang="zh-Hant">安裝</span></a>
+    <a class="gh" href="https://github.com/xamjiang/ghosts">GitHub</a>
+    <button type="button" id="lang" aria-label="Switch language"><span class="en" lang="zh-Hant">中文</span><span class="zh">English</span></button>
+  </nav>
+</header>
+
+<div class="hero">
+  <span class="pill">macOS · Linux · Docker <b>·</b> MIT</span>
+  <h1>
+    <span class="en">Find the dev servers<br>you forgot to stop.</span>
+    <span class="zh" lang="zh-Hant">找出你忘了關的<br>dev server</span>
+  </h1>
+  <p class="lede">
+    <span class="en">AI agents and closed terminals leave dev servers and Docker containers running in the background. Ghosts shows what each one costs in CPU, memory and power, and stops it with one key.</span>
+    <span class="zh" lang="zh-Hant">AI agent 和關掉的終端機，常把 dev server 和 Docker 容器留在背景執行。Ghosts 讓你看到每一個吃了多少 CPU、記憶體和電，按一個鍵就關掉。</span>
+  </p>
   <div class="cmd">
-    <code id="install">curl -fsSL https://ghosts.xamjiang.com/install | bash</code>
-    <button type="button" data-copy="install">Copy</button>
+    <code id="install-cmd">curl -fsSL https://ghosts.xamjiang.com/install | bash</code>
+    <button type="button" class="copy" data-copy="install-cmd">
+      <span class="idle"><span class="en">Copy</span><span class="zh" lang="zh-Hant">複製</span></span>
+      <span class="done"><span class="en">Copied</span><span class="zh" lang="zh-Hant">已複製</span></span>
+    </button>
+  </div>
+  <p class="meta">
+    <span class="en">Then run <code>ghosts</code>. macOS 13+ and Linux (amd64, arm64).</span>
+    <span class="zh" lang="zh-Hant">裝好後輸入 <code>ghosts</code>。支援 macOS 13 以上和 Linux（amd64、arm64）。</span>
+  </p>
+</div>
+
+<div class="shot">
+  <img src="/images/demo.svg" width="1436" height="644" fetchpriority="high"
+    alt="Ghosts listing the dev servers listening on this machine with their CPU, memory and power, stopping a forgotten vite server, then switching to Docker containers">
+</div>
+
+<section id="how">
+  <div class="head">
+    <p class="eyebrow"><span class="en">The problem</span><span class="zh" lang="zh-Hant">問題在哪</span></p>
+    <h2><span class="en">How a ghost is born</span><span class="zh" lang="zh-Hant">幽靈是怎麼來的</span></h2>
+    <p><span class="en">Every forgotten server starts the same way.</span><span class="zh" lang="zh-Hant">每個被遺忘的 server，都是這樣留下來的。</span></p>
   </div>
 
-  <h2>What the script does</h2>
-  <table>
-    <tr><td>Ubuntu, Debian</td><td>Adds the ghosts APT repository and installs the package. <span>Asks for your sudo password. Updates with <code>apt upgrade</code>.</span></td></tr>
-    <tr><td>With Homebrew</td><td>Runs <code>brew install xamjiang/tap/ghosts</code>. <span>Updates with <code>brew upgrade</code>.</span></td></tr>
-    <tr><td>Anything else</td><td>Downloads the release binary, verifies its checksum and puts it in <code>~/.local/bin</code>. <span>Run the script again to update.</span></td></tr>
-  </table>
-  <p><a href="/install.sh">Read the script</a> before you run it.</p>
+  <div class="story" id="story">
+    <figure class="step">
+      <div class="scene">
+        <svg class="s1" viewBox="0 0 300 190" role="img" aria-label="A terminal where an agent runs npm run dev and vite starts on port 5173">
+          <defs><clipPath id="c1"><rect x="20" y="22" width="260" height="146" rx="10"/></clipPath></defs>
+          <g class="root a">
+            <rect x="20" y="22" width="260" height="146" rx="10" fill="#1f1f23" stroke="#fff" stroke-opacity=".08"/>
+            <circle cx="36" cy="38" r="4.5" fill="#ff5f57"/><circle cx="51" cy="38" r="4.5" fill="#febc2e"/><circle cx="66" cy="38" r="4.5" fill="#28c840"/>
+            <g class="mono" font-size="12.5">
+              <text class="a" style="animation-name:at2" x="36" y="72" fill="#8e8e93">$ <tspan fill="#f5f5f7">claude</tspan></text>
+              <text x="36" y="95" fill="#bf9bff" textLength="166" lengthAdjust="spacingAndGlyphs">› start the dev server</text>
+              <g clip-path="url(#c1)"><rect class="cover a" x="35" y="82" width="200" height="18" fill="#1f1f23"/></g>
+              <text class="a" style="animation-name:at11" x="36" y="118" fill="#8e8e93">$ <tspan fill="#f5f5f7">npm run dev</tspan></text>
+              <g class="a" style="animation-name:at16">
+                <text x="36" y="144" fill="#30d158">VITE <tspan fill="#8e8e93">ready ➜</tspan> <tspan fill="#64b5ff">:5173</tspan></text>
+                <rect class="cursor" x="178" y="134" width="7" height="13" fill="#f5f5f7" opacity=".7"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <span class="n">01</span>
+        <h4><span class="en">An agent starts a server</span><span class="zh" lang="zh-Hant">Agent 開了一個 server</span></h4>
+        <p><span class="en">Claude Code runs <code>npm run dev</code> to check its work.</span><span class="zh" lang="zh-Hant">Claude Code 跑 <code>npm run dev</code> 測試它寫的程式。</span></p>
+      </figcaption>
+    </figure>
 
-  <h2 id="apt">Set up APT yourself</h2>
-  <pre id="apt-cmds">sudo install -d -m 0755 /etc/apt/keyrings
+    <figure class="step">
+      <div class="scene">
+        <svg class="s2" viewBox="0 0 300 190" role="img" aria-label="The terminal is closed, but port 5173 is still listening">
+          <g class="root a">
+            <g class="port a">
+              <g class="halo a">
+                <rect class="ripple" x="80" y="78" width="140" height="34" rx="17" fill="none" stroke="#0a84ff"/>
+                <rect class="ripple r2" x="80" y="78" width="140" height="34" rx="17" fill="none" stroke="#0a84ff"/>
+              </g>
+              <rect x="80" y="78" width="140" height="34" rx="17" fill="#0a84ff" fill-opacity=".14" stroke="#0a84ff" stroke-opacity=".6"/>
+              <circle class="dot" cx="100" cy="95" r="4" fill="#30d158"/>
+              <text class="mono" x="112" y="99.5" font-size="12.5" fill="#64b5ff" textLength="92" lengthAdjust="spacingAndGlyphs">LISTEN :5173</text>
+            </g>
+            <g class="win a">
+              <rect x="20" y="22" width="260" height="146" rx="10" fill="#1f1f23" stroke="#fff" stroke-opacity=".08"/>
+              <circle cx="36" cy="38" r="4.5" fill="#ff5f57"/><circle cx="51" cy="38" r="4.5" fill="#febc2e"/><circle cx="66" cy="38" r="4.5" fill="#28c840"/>
+              <circle class="ring a" cx="36" cy="38" r="4.5" fill="none" stroke="#ff5f57" stroke-width="1.5"/>
+              <g class="mono" font-size="12.5">
+                <text x="36" y="72" fill="#8e8e93">$ <tspan fill="#f5f5f7">npm run dev</tspan></text>
+                <text x="36" y="96" fill="#30d158">VITE <tspan fill="#8e8e93">ready ➜</tspan> <tspan fill="#64b5ff">:5173</tspan></text>
+                <text x="36" y="120" fill="#8e8e93">✓ <tspan fill="#f5f5f7">Done. The app works.</tspan></text>
+              </g>
+            </g>
+            <g class="pointer a">
+              <path d="M0 0v15l4-3.6 2.6 6 2.6-1.1-2.6-5.9h5.4z" fill="#fff" stroke="#000" stroke-width=".8" stroke-linejoin="round"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <span class="n">02</span>
+        <h4><span class="en">The session ends</span><span class="zh" lang="zh-Hant">Session 結束了</span></h4>
+        <p><span class="en">The terminal closes, but port 5173 is still listening.</span><span class="zh" lang="zh-Hant">終端機關了，port 5173 卻還在 listen。</span></p>
+      </figcaption>
+    </figure>
+
+    <figure class="step">
+      <div class="scene">
+        <svg class="s3" viewBox="0 0 300 190" role="img" aria-label="Two days later, a ghost still holds port 5173 and drains the battery">
+          <defs>
+            <linearGradient id="gb" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#fff"/><stop offset=".7" stop-color="#e9ecff"/><stop offset="1" stop-color="#c9d2ff" stop-opacity=".6"/>
+            </linearGradient>
+            <radialGradient id="gg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#5e5ce6" stop-opacity=".45"/><stop offset="1" stop-color="#5e5ce6" stop-opacity="0"/></radialGradient>
+          </defs>
+          <g class="root a">
+            <g class="ghost a">
+              <circle cx="92" cy="92" r="70" fill="url(#gg)"/>
+              <g class="float">
+                <path d="M60 78a32 32 0 0 1 64 0v48q-8-9.6-16 0q-8 9.6-16 0q-8-9.6-16 0q-8 9.6-16 0z" fill="url(#gb)"/>
+                <ellipse cx="81" cy="84" rx="4.8" ry="6.4" fill="#14141c"/><ellipse cx="103" cy="84" rx="4.8" ry="6.4" fill="#14141c"/>
+                <circle cx="82.6" cy="81.6" r="1.6" fill="#fff"/><circle cx="104.6" cy="81.6" r="1.6" fill="#fff"/>
+                <ellipse cx="92" cy="98" rx="3.4" ry="3.8" fill="#14141c"/>
+                <ellipse cx="72" cy="94" rx="4.4" ry="2.4" fill="#ff7aa8" opacity=".4"/><ellipse cx="112" cy="94" rx="4.4" ry="2.4" fill="#ff7aa8" opacity=".4"/>
+              </g>
+              <rect x="60" y="146" width="64" height="24" rx="12" fill="#1c1c22" stroke="#3a3a44"/>
+              <text class="mono" x="92" y="162" font-size="12" fill="#a1a1aa" text-anchor="middle">:5173</text>
+            </g>
+            <g class="mono" font-size="12">
+              <g class="a" style="animation-name:at58">
+                <text x="160" y="66" fill="#8e8e93" font-size="10.5">UPTIME</text>
+                <text x="160" y="84" fill="#f5f5f7" font-size="15">2d 4h</text>
+              </g>
+              <g class="a" style="animation-name:at62">
+                <text x="160" y="116" fill="#8e8e93" font-size="10.5">BATTERY</text>
+                <rect x="160" y="125" width="70" height="26" rx="6" fill="none" stroke="#8e8e93" stroke-width="1.5"/>
+                <rect x="231" y="133" width="4" height="10" rx="1.5" fill="#8e8e93"/>
+                <rect class="fill a" x="164" y="129" width="62" height="18" rx="3"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <span class="n">03</span>
+        <h4><span class="en">The server lingers</span><span class="zh" lang="zh-Hant">Server 留了下來</span></h4>
+        <p><span class="en">Days later it still holds the port and draws power.</span><span class="zh" lang="zh-Hant">兩天後，它還佔著 port、還在耗電。</span></p>
+      </figcaption>
+    </figure>
+
+    <figure class="step">
+      <div class="scene">
+        <svg class="s4" viewBox="0 0 300 190" role="img" aria-label="Ghosts lists vite on port 5173 as detached; pressing x stops it and frees the port">
+          <g class="root a">
+            <g class="a" style="animation-name:at75">
+              <rect x="20" y="22" width="260" height="146" rx="10" fill="#1c1c1e" stroke="#fff" stroke-opacity=".08"/>
+              <circle cx="36" cy="38" r="4.5" fill="#ff5f57"/><circle cx="51" cy="38" r="4.5" fill="#febc2e"/><circle cx="66" cy="38" r="4.5" fill="#28c840"/>
+              <text x="150" y="42" font-size="11" fill="#98989d" text-anchor="middle">ghosts</text>
+              <g class="mono" font-size="12">
+                <text x="34" y="70" font-size="10.5" fill="#6e6e73">PORT  NAME</text>
+                <text x="34" y="92" fill="#f5f5f7">3000  <tspan fill="#d1d1d6">next dev</tspan></text>
+                <g class="gone a">
+                  <rect class="a" style="animation-name:at78" x="28" y="99" width="244" height="20" rx="4" fill="#0a84ff" fill-opacity=".28"/>
+                  <text x="34" y="113.5" fill="#f5f5f7">5173  <tspan fill="#d1d1d6">vite</tspan></text>
+                  <text x="264" y="113.5" fill="#ff9f0a" font-size="10.5" text-anchor="end">detached</text>
+                </g>
+                <g class="up a">
+                  <text x="34" y="136" fill="#f5f5f7">8000  <tspan fill="#d1d1d6">uvicorn</tspan></text>
+                </g>
+              </g>
+            </g>
+            <g class="key a">
+              <rect x="136" y="134" width="28" height="26" rx="6" fill="#2c2c30" stroke="#5a5a62"/>
+              <rect x="136" y="134" width="28" height="23" rx="6" fill="#3a3a40"/>
+              <text class="mono" x="150" y="150.5" font-size="13" fill="#f5f5f7" text-anchor="middle">x</text>
+            </g>
+            <g class="a" style="animation-name:at89">
+              <text class="mono" x="34" y="156" font-size="11" fill="#30d158">✓ <tspan fill="#d1d1d6">Stopped vite · port 5173 is free</tspan></text>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <span class="n">04</span>
+        <h4><span class="en">Ghosts finds it</span><span class="zh" lang="zh-Hant">Ghosts 找到它</span></h4>
+        <p><span class="en">It's marked detached. Press <kbd>x</kbd> and the port is free.</span><span class="zh" lang="zh-Hant">它被標成 detached，按 <kbd>x</kbd>，port 就空出來了。</span></p>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="features">
+  <div class="head">
+    <p class="eyebrow"><span class="en">Features</span><span class="zh" lang="zh-Hant">功能</span></p>
+    <h2><span class="en">Everything listening, in one window</span><span class="zh" lang="zh-Hant">所有在 listen 的東西，一個視窗看完</span></h2>
+  </div>
+
+  <div class="feature tall">
+    <div class="text">
+      <h3><span class="en">👻 Spot the real ghosts</span><span class="zh" lang="zh-Hant">👻 認出真正的幽靈</span></h3>
+      <p class="en">The terminal is gone, the agent is done, but the server is still up. Ghosts marks processes that outlived their session as <b>detached</b>, and shows which project they belong to, how long they've been running and the full command that started them.</p>
+      <p class="zh" lang="zh-Hant">終端機關了、agent 跑完了，server 卻還在：Ghosts 會把這種脫離 session 的程序標成 <b>detached</b>，並告訴你它屬於哪個專案、跑了多久、完整的指令是什麼。</p>
+    </div>
+    <div class="art"><img src="/images/detached.svg" width="554" height="530" loading="lazy" alt="Details panel: vite has been running for 2 days 4 hours, and its parent reads detached from its session"></div>
+  </div>
+
+  <div class="feature flip">
+    <div class="text">
+      <h3><span class="en">🔋 See what's draining power</span><span class="zh" lang="zh-Hant">🔋 看誰在吃電</span></h3>
+      <p class="en">CPU and memory for every service, plus each process's actual power draw on Apple Silicon, children included. Press <kbd>s</kbd> to sort by power.</p>
+      <p class="zh" lang="zh-Hant">每個服務的 CPU、記憶體，以及 Apple Silicon 上每個程序的實際耗電（含子程序），按 <kbd>s</kbd> 依耗電排序。</p>
+    </div>
+    <div class="art"><img src="/images/power.svg" width="957" height="283" loading="lazy" alt="Ports sorted by power, with next dev drawing 2.4 W"></div>
+  </div>
+
+  <div class="feature">
+    <div class="text">
+      <h3><span class="en">🐳 Docker included</span><span class="zh" lang="zh-Hant">🐳 Docker 也一起管</span></h3>
+      <p class="en">Containers are grouped by compose project, and ports proxied by Docker Desktop map back to the real container. Stop a whole compose project at once. Works with Docker Desktop, OrbStack, Colima and Docker Engine.</p>
+      <p class="zh" lang="zh-Hant">容器依 compose 專案分組，Docker Desktop 代理的 port 會對回真正的容器，一次停掉整個 compose 專案。支援 Docker Desktop、OrbStack、Colima 和 Docker Engine。</p>
+    </div>
+    <div class="art"><img src="/images/containers.svg" width="957" height="321" loading="lazy" alt="Containers tab: two compose projects, agent-api and storefront, and a standalone container"></div>
+  </div>
+
+  <div class="feature flip">
+    <div class="text">
+      <h3><span class="en">🛑 Stops things safely</span><span class="zh" lang="zh-Hant">🛑 安全地關掉</span></h3>
+      <ul class="en">
+        <li><kbd>x</kbd> sends SIGTERM, and only offers SIGKILL if the process is still alive after 3 seconds</li>
+        <li>Checks the start time first, so a reused PID never takes down the wrong process</li>
+        <li>Stops containers with <code>docker stop</code>, never by killing Docker Desktop</li>
+        <li>Hides apps and system services, and warns before stopping one</li>
+      </ul>
+      <ul class="zh" lang="zh-Hant">
+        <li><kbd>x</kbd> 先送 SIGTERM，3 秒沒結束才詢問要不要 SIGKILL</li>
+        <li>送出前比對程序的啟動時間，PID 被重複使用也不會誤殺</li>
+        <li>容器用 <code>docker stop</code>，不會誤殺 Docker Desktop</li>
+        <li>App 和系統服務預設隱藏，要停之前會多一句警告</li>
+      </ul>
+    </div>
+    <div class="art"><img src="/images/stop.svg" width="999" height="435" loading="lazy" alt="Pressing x shows a confirmation; y stops vite and shows Stopped vite · port 5173 is free"></div>
+  </div>
+</section>
+
+<section id="light">
+  <div class="head">
+    <p class="eyebrow"><span class="en">Lightweight</span><span class="zh" lang="zh-Hant">輕量</span></p>
+    <h2><span class="en">Light enough to leave open</span><span class="zh" lang="zh-Hant">輕到可以一直開著</span></h2>
+    <p><span class="en">No <code>lsof</code>, no <code>ss</code>: Ghosts reads the kernel directly.</span><span class="zh" lang="zh-Hant">不呼叫 <code>lsof</code>、<code>ss</code>，直接讀 kernel。</span></p>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="v">~2<small>ms</small></div><div class="l"><span class="en">per scan</span><span class="zh" lang="zh-Hant">一次掃描</span></div></div>
+    <div class="stat"><div class="v">~1<small>%</small></div><div class="l"><span class="en">CPU while open</span><span class="zh" lang="zh-Hant">開著時的 CPU</span></div></div>
+    <div class="stat"><div class="v">~15<small>MB</small></div><div class="l"><span class="en">memory</span><span class="zh" lang="zh-Hant">記憶體</span></div></div>
+    <div class="stat"><div class="v">0</div><div class="l"><span class="en">processes forked</span><span class="zh" lang="zh-Hant">fork 的外部程式</span></div></div>
+  </div>
+  <p class="note">
+    <span class="en">Measured on Apple Silicon. On Linux (i7-8700): ~4 ms, ~0.9% CPU, ~19 MB. Scans slow down when the window isn't focused.</span>
+    <span class="zh" lang="zh-Hant">在 Apple Silicon 上測量。Linux（i7-8700）約 4 ms、0.9% CPU、19 MB。視窗失去焦點時會自動降低掃描頻率。</span>
+  </p>
+</section>
+
+<section id="install">
+  <div class="narrow">
+    <div class="head">
+      <p class="eyebrow"><span class="en">Install</span><span class="zh" lang="zh-Hant">安裝</span></p>
+      <h2><span class="en">One line, real updates</span><span class="zh" lang="zh-Hant">一行安裝，正常更新</span></h2>
+      <p><span class="en">The script uses your system's own package manager, so Ghosts updates like everything else.</span><span class="zh" lang="zh-Hant">Script 會用系統原本的套件管理器安裝，之後的更新方式和其他軟體一樣。</span></p>
+    </div>
+
+    <div class="cmd">
+      <code id="install-cmd-2">curl -fsSL https://ghosts.xamjiang.com/install | bash</code>
+      <button type="button" class="copy" data-copy="install-cmd-2">
+        <span class="idle"><span class="en">Copy</span><span class="zh" lang="zh-Hant">複製</span></span>
+        <span class="done"><span class="en">Copied</span><span class="zh" lang="zh-Hant">已複製</span></span>
+      </button>
+    </div>
+
+    <h3 class="sm"><span class="en">What the script does</span><span class="zh" lang="zh-Hant">Script 會做什麼</span></h3>
+    <table>
+      <tr>
+        <td>Ubuntu, Debian</td>
+        <td>
+          <span class="en">Adds the ghosts APT repository and installs the package. <span class="s">Asks for your sudo password. Updates with <code>apt upgrade</code>.</span></span>
+          <span class="zh" lang="zh-Hant">加入 ghosts 的 APT repo 並安裝。<span class="s">會要 sudo 密碼，之後用 <code>apt upgrade</code> 更新。</span></span>
+        </td>
+      </tr>
+      <tr>
+        <td><span class="en">With Homebrew</span><span class="zh" lang="zh-Hant">有 Homebrew</span></td>
+        <td>
+          <span class="en">Runs <code>brew install xamjiang/tap/ghosts</code>. <span class="s">Updates with <code>brew upgrade</code>.</span></span>
+          <span class="zh" lang="zh-Hant">執行 <code>brew install xamjiang/tap/ghosts</code>。<span class="s">之後用 <code>brew upgrade</code> 更新。</span></span>
+        </td>
+      </tr>
+      <tr>
+        <td><span class="en">Anything else</span><span class="zh" lang="zh-Hant">其他系統</span></td>
+        <td>
+          <span class="en">Downloads the release binary, verifies its checksum and puts it in <code>~/.local/bin</code>. <span class="s">Run the script again to update.</span></span>
+          <span class="zh" lang="zh-Hant">下載 binary、驗證 checksum，裝到 <code>~/.local/bin</code>。<span class="s">再跑一次 script 就會更新。</span></span>
+        </td>
+      </tr>
+    </table>
+    <p>
+      <span class="en"><a href="/install.sh">Read the script</a> before you run it.</span>
+      <span class="zh" lang="zh-Hant">執行前可以先<a href="/install.sh">看 script 內容</a>。</span>
+    </p>
+
+    <div class="code-head">
+      <h3 class="sm" id="apt"><span class="en">Set up APT yourself</span><span class="zh" lang="zh-Hant">自己設定 APT</span></h3>
+      <button type="button" class="copy" data-copy="apt-cmds">
+        <span class="idle"><span class="en">Copy</span><span class="zh" lang="zh-Hant">複製</span></span>
+        <span class="done"><span class="en">Copied</span><span class="zh" lang="zh-Hant">已複製</span></span>
+      </button>
+    </div>
+    <pre id="apt-cmds">sudo install -d -m 0755 /etc/apt/keyrings
 curl -fsSL https://ghosts.xamjiang.com/apt/key.gpg | sudo tee /etc/apt/keyrings/ghosts.gpg >/dev/null
 echo "deb [signed-by=/etc/apt/keyrings/ghosts.gpg] https://ghosts.xamjiang.com/apt stable main" | sudo tee /etc/apt/sources.list.d/ghosts.list
 sudo apt update && sudo apt install ghosts</pre>
+  </div>
+</section>
 
-  <footer>
+<footer>
+  <div class="links">
     <a href="https://github.com/xamjiang/ghosts">GitHub</a>
     <a href="https://github.com/xamjiang/ghosts/releases">Releases</a>
-    <span>MIT License</span>
-  </footer>
-</main>
+    <a href="https://github.com/xamjiang/ghosts/blob/main/README.md">README</a>
+  </div>
+  <span><span class="en">MIT License · Built with</span><span class="zh" lang="zh-Hant">MIT License · 用</span> <a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a><span class="zh" lang="zh-Hant"> 打造</span></span>
+</footer>
+
+</div>
 <script>
-document.querySelectorAll("[data-copy]").forEach((b) => {
-  b.addEventListener("click", async () => {
+var titles = { en: "Ghosts: find the dev servers you forgot to stop", zh: "Ghosts：找出你忘了關的 dev server" };
+function setLang(l) {
+  document.documentElement.dataset.lang = l;
+  document.documentElement.lang = l === "zh" ? "zh-Hant" : "en";
+  document.title = titles[l];
+}
+setLang(document.documentElement.dataset.lang);
+document.getElementById("lang").addEventListener("click", function () {
+  var l = document.documentElement.dataset.lang === "zh" ? "en" : "zh";
+  setLang(l);
+  try { localStorage.setItem("ghosts-lang", l); } catch (e) {}
+});
+
+document.querySelectorAll("[data-copy]").forEach(function (b) {
+  b.addEventListener("click", async function () {
     try {
       await navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent);
-      b.textContent = "Copied";
       b.classList.add("copied");
-      setTimeout(() => { b.textContent = "Copy"; b.classList.remove("copied"); }, 1600);
-    } catch {}
+      setTimeout(function () { b.classList.remove("copied"); }, 1600);
+    } catch (e) {}
   });
 });
+
+// Pause the storyboard while it's off screen.
+var story = document.getElementById("story");
+if ("IntersectionObserver" in window) {
+  new IntersectionObserver(function (es) {
+    story.classList.toggle("paused", !es[0].isIntersecting);
+  }).observe(story);
+}
 </script>
 </body>
 </html>

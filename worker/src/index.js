@@ -1,6 +1,7 @@
 // ghosts.xamjiang.com
 //
 //   /             landing page
+//   /images/…     the README screenshots the landing page shows
 //   /install      the install script for curl, the landing page for browsers
 //   /install.sh   the install script, always (for reading it first)
 //   /apt/...      the APT repository, served from the latest GitHub release
@@ -8,6 +9,19 @@ import script from "../../packaging/install.sh";
 import keyAsc from "../../packaging/apt-key.asc";
 import keyGpg from "../../packaging/apt-key.gpg";
 import page from "./page.html";
+import demo from "../../docs/images/demo.svg";
+import detached from "../../docs/images/detached.svg";
+import power from "../../docs/images/power.svg";
+import containers from "../../docs/images/containers.svg";
+import stop from "../../docs/images/stop.svg";
+
+const images = {
+	"demo.svg": demo,
+	"detached.svg": detached,
+	"power.svg": power,
+	"containers.svg": containers,
+	"stop.svg": stop,
+};
 
 const REPO = "https://github.com/xamjiang/ghosts";
 
@@ -20,6 +34,9 @@ export default {
 		const path = decodeURIComponent(url.pathname);
 		if (path === "/" || (path === "/install" && wantsHTML(request))) {
 			return html(page);
+		}
+		if (path.startsWith("/images/") && Object.hasOwn(images, path.slice("/images/".length))) {
+			return text(images[path.slice("/images/".length)], "image/svg+xml; charset=utf-8", 3600);
 		}
 		if (path === "/install" || path === "/install.sh") {
 			return text(script, "text/plain; charset=utf-8", 300);
