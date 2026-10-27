@@ -20,8 +20,10 @@ jobs:
       - name: Deploy
         working-directory: worker
         run: |
+          # Fail rather than skip: a green run that deployed nothing leaves
+          # the site silently out of date.
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::notice::CLOUDFLARE_API_TOKEN isn't set; deploy by hand with: cd worker && npx wrangler@4.137.0 deploy"
-            exit 0
+            echo "::error::CLOUDFLARE_API_TOKEN isn't set, so nothing was deployed. Add the secret, or deploy by hand with: cd worker && npx wrangler@4.137.0 deploy"
+            exit 1
           fi
           npx --yes wrangler@4.137.0 deploy
