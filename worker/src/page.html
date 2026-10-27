@@ -160,6 +160,31 @@ kbd {
 .stat .l { color: var(--sub); font-size: 14px; margin-top: 6px; }
 .note { color: var(--sub); font-size: 14px; text-align: center; margin: 16px 0 0; }
 
+/* Getting started */
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.steps > li { position: relative; padding: 0 0 36px 52px; counter-increment: step; }
+.steps > li::before {
+  content: counter(step); position: absolute; left: 0; top: 0;
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 14px; font-weight: 700; color: var(--accent);
+  background: var(--card); border: 1px solid var(--line);
+}
+.steps > li::after { content: ""; position: absolute; left: 16px; top: 40px; bottom: 4px; width: 1px; background: var(--line); }
+.steps > li:last-child { padding-bottom: 0; }
+.steps > li:last-child::after { display: none; }
+.steps h3 { font-size: 18px; margin: 4px 0 8px; }
+.steps p { color: var(--sub); margin: 0 0 12px; }
+.steps p:last-child { margin-bottom: 0; }
+.steps b { color: var(--fg); }
+.steps .cmd { max-width: none; margin: 0 0 12px; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: center; color: var(--sub); margin: 0; }
+.keys dt { white-space: nowrap; }
+.keys dd { margin: 0; }
+.tip { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-top: 40px; }
+.tip h3.sm { margin: 0 0 8px; }
+.tip p { color: var(--sub); margin: 0 0 12px; }
+.tip p:last-child { margin: 12px 0 0; }
+
 /* Install */
 table { width: 100%; border-collapse: collapse; }
 td { padding: 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -309,6 +334,7 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
 <header>
   <a class="logo" href="/">👻 Ghosts</a>
   <nav>
+    <a href="#start"><span class="en">Get started</span><span class="zh" lang="zh-Hant">教學</span></a>
     <a href="#install"><span class="en">Install</span><span class="zh" lang="zh-Hant">安裝</span></a>
     <a class="gh" href="https://github.com/xamjiang/ghosts">GitHub</a>
     <button type="button" id="lang" aria-label="Switch language"><span class="en" lang="zh-Hant">中文</span><span class="zh">English</span></button>
@@ -335,6 +361,9 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
   <p class="meta">
     <span class="en">Then run <code>ghosts</code>. macOS 13+ and Linux (amd64, arm64).</span>
     <span class="zh" lang="zh-Hant">裝好後輸入 <code>ghosts</code>。支援 macOS 13 以上和 Linux（amd64、arm64）。</span>
+    <br>
+    <span class="en">New to the terminal? <a href="#start">Follow the step-by-step guide ↓</a></span>
+    <span class="zh" lang="zh-Hant">沒用過終端機？<a href="#start">看一步一步的教學 ↓</a></span>
   </p>
 </div>
 
@@ -576,6 +605,89 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
     <span class="en">Measured on Apple Silicon. On Linux (i7-8700): ~4 ms, ~0.9% CPU, ~19 MB. Scans slow down when the window isn't focused.</span>
     <span class="zh" lang="zh-Hant">在 Apple Silicon 上測量。Linux（i7-8700）約 4 ms、0.9% CPU、19 MB。視窗失去焦點時會自動降低掃描頻率。</span>
   </p>
+</section>
+
+<section id="start">
+  <div class="narrow">
+    <div class="head">
+      <p class="eyebrow"><span class="en">Get started</span><span class="zh" lang="zh-Hant">開始使用</span></p>
+      <h2><span class="en">New to the terminal? Start here</span><span class="zh" lang="zh-Hant">第一次用終端機？從這裡開始</span></h2>
+      <p><span class="en">Four steps, about a minute.</span><span class="zh" lang="zh-Hant">四個步驟，大約一分鐘。</span></p>
+    </div>
+
+    <ol class="steps">
+      <li>
+        <h3><span class="en">Open a terminal</span><span class="zh" lang="zh-Hant">打開終端機</span></h3>
+        <p>
+          <span class="en"><b>macOS:</b> press <kbd>⌘</kbd> <kbd>Space</kbd> to open Spotlight, type <code>Terminal</code> and press <kbd>Return</kbd>.</span>
+          <span class="zh" lang="zh-Hant"><b>macOS：</b>按 <kbd>⌘</kbd> <kbd>空白鍵</kbd> 打開 Spotlight，輸入「終端機」（或 <code>Terminal</code>），按 <kbd>Return</kbd>。</span>
+        </p>
+        <p>
+          <span class="en"><b>Ubuntu and most Linux desktops:</b> press <kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>T</kbd>.</span>
+          <span class="zh" lang="zh-Hant"><b>Ubuntu 和大多數 Linux 桌面：</b>按 <kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>T</kbd>。</span>
+        </p>
+      </li>
+      <li>
+        <h3><span class="en">Install Ghosts</span><span class="zh" lang="zh-Hant">安裝 Ghosts</span></h3>
+        <p><span class="en">Paste this line into the terminal and press <kbd>Enter</kbd>:</span><span class="zh" lang="zh-Hant">把這行貼進終端機，按 <kbd>Enter</kbd>：</span></p>
+        <div class="cmd">
+          <code id="start-install">curl -fsSL https://ghosts.xamjiang.com/install | bash</code>
+          <button type="button" class="copy" data-copy="start-install">
+            <span class="idle"><span class="en">Copy</span><span class="zh" lang="zh-Hant">複製</span></span>
+            <span class="done"><span class="en">Copied</span><span class="zh" lang="zh-Hant">已複製</span></span>
+          </button>
+        </div>
+        <p>
+          <span class="en">If it asks for a password, type the one you use to log in to your computer and press <kbd>Enter</kbd>. Nothing shows up on screen while you type a password. That's normal. When you see <code>✓ ghosts … is installed.</code>, it's done.</span>
+          <span class="zh" lang="zh-Hant">如果要求輸入密碼，請輸入你登入電腦用的密碼，再按 <kbd>Enter</kbd>。輸入密碼時畫面上不會出現任何字，這是正常的。看到 <code>✓ ghosts … is installed.</code> 就是裝好了。</span>
+        </p>
+      </li>
+      <li>
+        <h3><span class="en">Run it</span><span class="zh" lang="zh-Hant">執行</span></h3>
+        <p><span class="en">Type <code>ghosts</code> and press <kbd>Enter</kbd>:</span><span class="zh" lang="zh-Hant">輸入 <code>ghosts</code>，按 <kbd>Enter</kbd>：</span></p>
+        <div class="cmd">
+          <code id="start-run">ghosts</code>
+          <button type="button" class="copy" data-copy="start-run">
+            <span class="idle"><span class="en">Copy</span><span class="zh" lang="zh-Hant">複製</span></span>
+            <span class="done"><span class="en">Copied</span><span class="zh" lang="zh-Hant">已複製</span></span>
+          </button>
+        </div>
+        <p>
+          <span class="en">Ghosts opens right inside the terminal window and lists everything that's listening on a port. You only install it once. From now on, open a terminal and type <code>ghosts</code> whenever you want to use it.</span>
+          <span class="zh" lang="zh-Hant">Ghosts 會直接在終端機視窗裡打開，列出所有正在 listen port 的程序。安裝只要做一次，以後想用的時候，打開終端機、輸入 <code>ghosts</code> 就好。</span>
+        </p>
+      </li>
+      <li>
+        <h3><span class="en">Stop a ghost</span><span class="zh" lang="zh-Hant">關掉幽靈</span></h3>
+        <dl class="keys">
+          <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd><span class="en">Pick a row</span><span class="zh" lang="zh-Hant">選一列</span></dd>
+          <dt><kbd>⏎</kbd></dt><dd><span class="en">Show its details</span><span class="zh" lang="zh-Hant">看詳細資訊</span></dd>
+          <dt><kbd>x</kbd> <kbd>⏎</kbd></dt><dd><span class="en">Stop it: <kbd>x</kbd>, then <kbd>⏎</kbd> to confirm</span><span class="zh" lang="zh-Hant">關掉它：按 <kbd>x</kbd>，再按 <kbd>⏎</kbd> 確認</span></dd>
+          <dt><kbd>q</kbd></dt><dd><span class="en">Quit Ghosts</span><span class="zh" lang="zh-Hant">離開 Ghosts</span></dd>
+          <dt><kbd>?</kbd></dt><dd><span class="en">See every key</span><span class="zh" lang="zh-Hant">看所有快捷鍵</span></dd>
+        </dl>
+      </li>
+    </ol>
+
+    <div class="tip">
+      <h3 class="sm"><span class="en">Getting <code>command not found: ghosts</code>?</span><span class="zh" lang="zh-Hant">出現 <code>command not found: ghosts</code>？</span></h3>
+      <p>
+        <span class="en">On a Mac without Homebrew, and on some Linux systems, the script puts Ghosts in <code>~/.local/bin</code>, and your terminal may not look for programs there yet. Run this once, then open a new terminal window and try <code>ghosts</code> again:</span>
+        <span class="zh" lang="zh-Hant">在沒有 Homebrew 的 Mac 和部分 Linux 上，script 會把 Ghosts 裝到 <code>~/.local/bin</code>，但終端機可能還不會去那裡找程式。執行下面這行一次，再開一個新的終端機視窗輸入 <code>ghosts</code> 就可以了：</span>
+      </p>
+      <div class="cmd">
+        <code id="start-path">echo 'export PATH="$HOME/.local/bin:$PATH"' &gt;&gt; ~/.zshrc</code>
+        <button type="button" class="copy" data-copy="start-path">
+          <span class="idle"><span class="en">Copy</span><span class="zh" lang="zh-Hant">複製</span></span>
+          <span class="done"><span class="en">Copied</span><span class="zh" lang="zh-Hant">已複製</span></span>
+        </button>
+      </div>
+      <p>
+        <span class="en">That's for the Mac's default shell, zsh. On Linux with bash, use <code>~/.bashrc</code> instead of <code>~/.zshrc</code>. Until then, you can run it with its full path: <code>~/.local/bin/ghosts</code>.</span>
+        <span class="zh" lang="zh-Hant">這是給 Mac 預設的 zsh 用的；Linux 上用 bash 的話，把 <code>~/.zshrc</code> 換成 <code>~/.bashrc</code>。在那之前，也可以用完整路徑執行：<code>~/.local/bin/ghosts</code>。</span>
+      </p>
+    </div>
+  </div>
 </section>
 
 <section id="install">
