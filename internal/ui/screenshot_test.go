@@ -69,7 +69,7 @@ func TestScreenshots(t *testing.T) {
 		shot(r, m, "detached", 2400*time.Millisecond)
 		press(m, "x")
 		shot(r, m, "confirm", 1800*time.Millisecond)
-		// "y" would really stop the process; show what the user sees instead.
+		// Enter would really stop the process; show what the user sees instead.
 		victim := m.selected().l
 		m.confirm = nil
 		m.busy[victim.Key()] = "Stopping"

@@ -984,7 +984,7 @@ func (m Model) viewFooter() []string {
 		// The keys come first so they can never be pushed off-screen; a
 		// long warning is what gets truncated instead.
 		bottom := []seg{bar}
-		bottom = append(bottom, m.keyHint("y", c.verb, accent)...)
+		bottom = append(bottom, m.keyHint("⏎", c.verb, accent)...)
 		bottom = append(bottom, spaces(3))
 		bottom = append(bottom, m.keyHint("esc", "Cancel", m.th.fg)...)
 		if c.warn != "" {

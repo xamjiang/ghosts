@@ -65,7 +65,7 @@ type toast struct {
 	kind toastKind
 }
 
-// confirm is a pending destructive action awaiting y/n.
+// confirm is a pending destructive action awaiting enter (or y) or esc.
 type confirm struct {
 	title  string // "Stop vite?"
 	detail string // "Port 5173 · PID 81283 · CityMap"
@@ -501,7 +501,7 @@ func (m *Model) key(msg tea.KeyPressMsg) tea.Cmd {
 
 	if m.confirm != nil {
 		switch k {
-		case "y", "Y", "enter":
+		case "enter", "y", "Y":
 			c := m.confirm
 			m.confirm = nil
 			for _, key := range c.keys {
@@ -513,7 +513,7 @@ func (m *Model) key(msg tea.KeyPressMsg) tea.Cmd {
 				cmds = append(cmds, spin())
 			}
 			return tea.Batch(cmds...)
-		case "n", "N", "esc", "q":
+		case "esc", "q", "n", "N":
 			m.confirm = nil
 		}
 		return nil

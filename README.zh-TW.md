@@ -55,9 +55,9 @@ AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker �
 
 ### 🛑 安全地關掉
 
-<img align="right" src="docs/images/stop.svg" alt="按 x 後出現確認列，按 y 停止 vite，顯示 Stopped vite · port 5173 is free" width="58%">
+<img align="right" src="docs/images/stop.svg" alt="按 x 後出現確認列，按 Enter 停止 vite，顯示 Stopped vite · port 5173 is free" width="58%">
 
-按 <kbd>x</kbd> 停止，<kbd>X</kbd> 強制停止。
+按 <kbd>x</kbd> 停止、<kbd>X</kbd> 強制停止，再按 <kbd>⏎</kbd> 確認。
 
 - 先送 SIGTERM，3 秒沒結束才詢問要不要 SIGKILL
 - 送出前比對程序的啟動時間，PID 被重複使用也不會誤殺
