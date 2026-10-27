@@ -1,7 +1,8 @@
 // ghosts.xamjiang.com
 //
 //   /             landing page
-//   /images/…     the README screenshots the landing page shows
+//   /images/…     the README screenshots the landing page shows, and its
+//                 link preview (social.png)
 //   /install      the install script for curl, the landing page for browsers
 //   /install.sh   the install script, always (for reading it first)
 //   /apt/...      the APT repository, served from the latest GitHub release
@@ -14,6 +15,7 @@ import detached from "../../docs/images/detached.svg";
 import power from "../../docs/images/power.svg";
 import containers from "../../docs/images/containers.svg";
 import stop from "../../docs/images/stop.svg";
+import social from "../../docs/images/social.png";
 
 const images = {
 	"demo.svg": demo,
@@ -34,6 +36,9 @@ export default {
 		const path = decodeURIComponent(url.pathname);
 		if (path === "/" || (path === "/install" && wantsHTML(request))) {
 			return html(page);
+		}
+		if (path === "/images/social.png") {
+			return new Response(social, { headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" } });
 		}
 		if (path.startsWith("/images/") && Object.hasOwn(images, path.slice("/images/".length))) {
 			return text(images[path.slice("/images/".length)], "image/svg+xml; charset=utf-8", 3600);

@@ -224,6 +224,14 @@ GOOS=linux GOARCH=amd64 go build -o bin/ghosts-linux ./cmd/ghosts
 GHOSTS_SCREENSHOTS=$PWD/docs/images go test -run TestScreenshots ./internal/ui
 ```
 
+`docs/images/social.png` 是官網和 repo 被分享時顯示的預覽圖。連結預覽需要 PNG，所以它是用 Chrome 從 `social.svg` 渲染出來的。改了 SVG 之後重新產生，再到 repo 的 Settings → Social preview 重新上傳：
+
+```sh
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars \
+  --force-device-scale-factor=1 --window-size=1280,640 \
+  --screenshot="$PWD/docs/images/social.png" "file://$PWD/docs/images/social.svg"
+```
+
 <details>
 <summary><b>發佈新版本</b>：推一個 tag，macOS / Linux binary、<code>.deb</code>、APT repo 和 Homebrew formula 全部自動更新。</summary>
 
