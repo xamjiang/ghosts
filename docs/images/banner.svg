@@ -75,8 +75,8 @@
 
 <!-- Wordmark -->
 <text class="sans" x="640" y="196" font-size="112" font-weight="800" letter-spacing="-3" fill="url(#word)">Ghosts</text>
-<text class="sans" x="644" y="250" font-size="30" font-weight="500" fill="#D1D1D6">找出被遺忘的 dev server 和 Docker 容器</text>
-<text class="sans" x="644" y="288" font-size="21" fill="#8E8E93">看它們吃多少 CPU、記憶體和電，然後一鍵關掉</text>
+<text class="sans" x="644" y="250" font-size="30" font-weight="500" fill="#D1D1D6">Find the dev servers you forgot to stop</text>
+<text class="sans" x="644" y="288" font-size="21" fill="#8E8E93">See their CPU, memory and power draw. Stop them with one key.</text>
 <g class="mono" font-size="15" fill="#A1A1AA">
   <rect x="644" y="318" width="80" height="30" rx="15" fill="#FFFFFF" fill-opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
   <text x="684" y="338" text-anchor="middle">macOS</text>
@@ -84,7 +84,7 @@
   <text x="776" y="338" text-anchor="middle">Linux</text>
   <rect x="828" y="318" width="88" height="30" rx="15" fill="#FFFFFF" fill-opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
   <text x="872" y="338" text-anchor="middle">Docker</text>
-  <rect x="928" y="318" width="132" height="30" rx="15" fill="#0A84FF" fill-opacity=".16" stroke="#0A84FF" stroke-opacity=".5"/>
-  <text x="994" y="338" text-anchor="middle" fill="#64B5FF">零 fork · 2ms</text>
+  <rect x="928" y="318" width="160" height="30" rx="15" fill="#0A84FF" fill-opacity=".16" stroke="#0A84FF" stroke-opacity=".5"/>
+  <text x="1008" y="338" text-anchor="middle" fill="#64B5FF">no forks · 2 ms</text>
 </g>
 </svg>

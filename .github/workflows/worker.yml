@@ -1,11 +1,11 @@
 name: Worker
 
-# Deploy ghosts.xamjiang.com when the Worker or the install script it serves
-# changes.
+# Deploy ghosts.xamjiang.com when the Worker, or the install script and images
+# it serves, change.
 on:
   push:
     branches: [main]
-    paths: ["worker/**", "packaging/install.sh"]
+    paths: ["worker/**", "packaging/install.sh", "docs/images/**"]
   workflow_dispatch:
 
 jobs:

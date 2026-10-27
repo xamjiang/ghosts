@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400">
+<style>
+.sans{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+.mono{font-family:"SF Mono",SFMono-Regular,ui-monospace,Menlo,Consolas,monospace}
+.float{animation:float 4.5s ease-in-out infinite}
+.shadow{animation:shadow 4.5s ease-in-out infinite;transform-origin:300px 344px}
+.eyes{animation:blink 6s infinite;transform-origin:300px 190px}
+.tag{animation:drift 7s ease-in-out infinite;opacity:0}
+.t2{animation-delay:-1.8s}.t3{animation-delay:-3.6s}.t4{animation-delay:-5.2s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes shadow{0%,100%{transform:scaleX(1);opacity:.5}50%{transform:scaleX(.82);opacity:.3}}
+@keyframes blink{0%,46%,50%,100%{transform:scaleY(1)}48%{transform:scaleY(.1)}}
+@keyframes drift{0%{opacity:0;transform:translateY(10px)}25%,70%{opacity:.85}100%{opacity:0;transform:translateY(-24px)}}
+@media (prefers-reduced-motion:reduce){.float,.shadow,.eyes,.tag{animation:none}.tag{opacity:.7}}
+</style>
+<defs>
+  <radialGradient id="glow" cx="300" cy="200" r="260" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#0A84FF" stop-opacity=".45"/>
+    <stop offset=".45" stop-color="#5E5CE6" stop-opacity=".16"/>
+    <stop offset="1" stop-color="#5E5CE6" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="glow2" cx="1150" cy="40" r="420" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#BF5AF2" stop-opacity=".18"/>
+    <stop offset="1" stop-color="#BF5AF2" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFFFFF"/>
+    <stop offset=".7" stop-color="#E9ECFF"/>
+    <stop offset="1" stop-color="#C9D2FF" stop-opacity=".55"/>
+  </linearGradient>
+  <linearGradient id="word" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#FFFFFF"/>
+    <stop offset="1" stop-color="#B8C4FF"/>
+  </linearGradient>
+  <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+    <circle cx="2" cy="2" r="1" fill="#FFFFFF" fill-opacity=".07"/>
+  </pattern>
+  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="18"/>
+  </filter>
+  <clipPath id="card"><rect width="1280" height="400" rx="28"/></clipPath>
+</defs>
+
+<g clip-path="url(#card)">
+  <rect width="1280" height="400" fill="#0B0B10"/>
+  <rect width="1280" height="400" fill="url(#dots)"/>
+  <rect width="1280" height="400" fill="url(#glow2)"/>
+  <circle cx="300" cy="200" r="260" fill="url(#glow)"/>
+</g>
+<rect x=".5" y=".5" width="1279" height="399" rx="28" fill="none" stroke="#FFFFFF" stroke-opacity=".1"/>
+
+<!-- Ports the ghost left behind -->
+<g class="mono" font-size="18">
+  <g class="tag"><rect x="96" y="94" width="78" height="32" rx="16" fill="#1C1C22" stroke="#3A3A44"/><text x="135" y="116" fill="#8E8EA0" text-anchor="middle">:3000</text></g>
+  <g class="tag t2"><rect x="436" y="78" width="78" height="32" rx="16" fill="#1C1C22" stroke="#3A3A44"/><text x="475" y="100" fill="#8E8EA0" text-anchor="middle">:5173</text></g>
+  <g class="tag t3"><rect x="452" y="262" width="78" height="32" rx="16" fill="#1C1C22" stroke="#3A3A44"/><text x="491" y="284" fill="#8E8EA0" text-anchor="middle">:8000</text></g>
+  <g class="tag t4"><rect x="74" y="250" width="78" height="32" rx="16" fill="#1C1C22" stroke="#3A3A44"/><text x="113" y="272" fill="#8E8EA0" text-anchor="middle">:5432</text></g>
+</g>
+
+<!-- The ghost -->
+<ellipse class="shadow" cx="300" cy="344" rx="70" ry="9" fill="#000" opacity=".5"/>
+<g class="float">
+  <path d="M220 170a80 80 0 0 1 160 0v120q-20-24-40 0q-20 24-40 0q-20-24-40 0q-20 24-40 0z" fill="#8FA4FF" opacity=".55" filter="url(#soft)"/>
+  <path d="M220 170a80 80 0 0 1 160 0v120q-20-24-40 0q-20 24-40 0q-20-24-40 0q-20 24-40 0z" fill="url(#body)"/>
+  <g class="eyes">
+    <ellipse cx="272" cy="186" rx="12" ry="16" fill="#14141C"/>
+    <ellipse cx="328" cy="186" rx="12" ry="16" fill="#14141C"/>
+    <circle cx="276" cy="180" r="4" fill="#FFFFFF"/>
+    <circle cx="332" cy="180" r="4" fill="#FFFFFF"/>
+  </g>
+  <ellipse cx="250" cy="216" rx="11" ry="6" fill="#FF7AA8" opacity=".35"/>
+  <ellipse cx="350" cy="216" rx="11" ry="6" fill="#FF7AA8" opacity=".35"/>
+  <ellipse cx="300" cy="222" rx="8" ry="9" fill="#14141C"/>
+</g>
+
+<!-- Wordmark -->
+<text class="sans" x="640" y="196" font-size="112" font-weight="800" letter-spacing="-3" fill="url(#word)">Ghosts</text>
+<text class="sans" x="644" y="250" font-size="30" font-weight="500" fill="#D1D1D6">找出被遺忘的 dev server 和 Docker 容器</text>
+<text class="sans" x="644" y="288" font-size="21" fill="#8E8E93">看它們吃多少 CPU、記憶體和電，然後一鍵關掉</text>
+<g class="mono" font-size="15" fill="#A1A1AA">
+  <rect x="644" y="318" width="80" height="30" rx="15" fill="#FFFFFF" fill-opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
+  <text x="684" y="338" text-anchor="middle">macOS</text>
+  <rect x="736" y="318" width="80" height="30" rx="15" fill="#FFFFFF" fill-opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
+  <text x="776" y="338" text-anchor="middle">Linux</text>
+  <rect x="828" y="318" width="88" height="30" rx="15" fill="#FFFFFF" fill-opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
+  <text x="872" y="338" text-anchor="middle">Docker</text>
+  <rect x="928" y="318" width="132" height="30" rx="15" fill="#0A84FF" fill-opacity=".16" stroke="#0A84FF" stroke-opacity=".5"/>
+  <text x="994" y="338" text-anchor="middle" fill="#64B5FF">零 fork · 2ms</text>
+</g>
+</svg>

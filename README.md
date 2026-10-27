@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="docs/images/banner.svg" alt="Ghosts：找出被遺忘的 dev server 和 Docker 容器" width="100%">
+  <img src="docs/images/banner.svg" alt="Ghosts: find the dev servers and Docker containers you forgot to stop" width="100%">
 </p>
+
+<p align="center"><b>English</b> · <a href="README.zh-TW.md">繁體中文</a></p>
 
 <p align="center">
   <a href="https://github.com/xamjiang/ghosts/releases/latest"><img src="https://img.shields.io/github/v/release/xamjiang/ghosts?style=flat-square&color=0A84FF&label=release" alt="Release"></a>
@@ -10,84 +12,84 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/xamjiang/ghosts?style=flat-square&color=30D158" alt="MIT"></a>
 </p>
 
-<h3 align="center">一行安裝</h3>
+<h3 align="center">Install in one line</h3>
 
 ```sh
 curl -fsSL https://ghosts.xamjiang.com/install | bash
 ```
 
-<p align="center">裝好後在終端機輸入 <code>ghosts</code> 就能開始。支援 macOS 13 以上和 Linux（amd64 / arm64）。<br>
-<sub>Ubuntu / Debian 會加入 APT repo、有 Homebrew 就用 brew，其他系統直接下載 binary。<a href="#安裝細節">安裝細節 ↓</a></sub></p>
+<p align="center">Then run <code>ghosts</code> in your terminal. Works on macOS 13+ and Linux (amd64 / arm64).<br>
+<sub>Adds an APT repository on Ubuntu / Debian, uses Homebrew if you have it, and downloads the binary everywhere else. <a href="#installation">Details ↓</a></sub></p>
 
 <br>
 
 <p align="center">
-  <img src="docs/images/demo.svg" alt="Ghosts 的畫面：列出正在 listen 的 dev server、它們的 CPU、記憶體和耗電，選取後在右側顯示詳細資訊" width="100%">
+  <img src="docs/images/demo.svg" alt="Ghosts listing the dev servers listening on this machine with their CPU, memory and power, and details of the selected one on the right" width="100%">
 </p>
 
-AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker 服務，結束後卻沒關。關掉的終端機、跑完的 agent、兩天前的 `npm run dev`，都還在背景吃電。**Ghosts 讓你一眼看到這些「幽靈」，按一個鍵就關掉。**
+AI coding tools like Claude Code and Codex start dev servers and Docker services to test their work, and often leave them running. A closed terminal, a finished agent run, the `npm run dev` from two days ago: they're all still in the background, holding ports and draining your battery. **Ghosts shows you every one of these leftovers at a glance, and stops them with a single key.**
 
-## ✨ 能做什麼
+## ✨ Features
 
 <table>
   <tr>
     <td width="40%" valign="top" rowspan="2">
-      <h3>👻 認出真正的幽靈</h3>
-      <p>終端機關了、agent 跑完了，server 卻還在：Ghosts 會把這種脫離 session 的程序標成 <b>detached</b>，並告訴你它屬於哪個專案、跑了多久、完整的指令是什麼。</p>
-      <img src="docs/images/detached.svg" alt="詳細資訊面板：vite 已執行 2 天 4 小時，Parent 顯示 detached from its session" width="100%">
+      <h3>👻 Spot the real ghosts</h3>
+      <p>The terminal is gone, the agent is done, but the server is still up. Ghosts marks processes that outlived their session as <b>detached</b>, and shows which project they belong to, how long they've been running and the full command that started them.</p>
+      <img src="docs/images/detached.svg" alt="Details panel: vite has been running for 2 days 4 hours, and its parent reads detached from its session" width="100%">
     </td>
     <td width="60%" valign="top">
-      <h3>🔋 看誰在吃電</h3>
-      <p>每個服務的 CPU、記憶體，以及 Apple Silicon 上每個程序的實際耗電（含子程序），按 <kbd>s</kbd> 依耗電排序。</p>
-      <img src="docs/images/power.svg" alt="依耗電排序的 port 清單，next dev 用了 2.4 W" width="100%">
+      <h3>🔋 See what's draining power</h3>
+      <p>CPU and memory for every service, plus each process's actual power draw on Apple Silicon, children included. Press <kbd>s</kbd> to sort by power.</p>
+      <img src="docs/images/power.svg" alt="Ports sorted by power, with next dev drawing 2.4 W" width="100%">
     </td>
   </tr>
   <tr>
     <td valign="top">
-      <h3>🐳 Docker 也一起管</h3>
-      <p>容器依 compose 專案分組，Docker Desktop 代理的 port 會對回真正的容器。一次停掉整個 compose 專案。</p>
-      <img src="docs/images/containers.svg" alt="Containers 分頁：agent-api、storefront 兩個 compose 專案和一個獨立容器" width="100%">
+      <h3>🐳 Docker included</h3>
+      <p>Containers are grouped by compose project, and ports proxied by Docker Desktop map back to the real container. Stop a whole compose project at once.</p>
+      <img src="docs/images/containers.svg" alt="Containers tab: two compose projects, agent-api and storefront, and a standalone container" width="100%">
     </td>
   </tr>
 </table>
 
-### 🛑 安全地關掉
+### 🛑 Stops things safely
 
-<img align="right" src="docs/images/stop.svg" alt="按 x 後出現確認列，按 y 停止 vite，顯示 Stopped vite · port 5173 is free" width="58%">
+<img align="right" src="docs/images/stop.svg" alt="Pressing x shows a confirmation; y stops vite and shows Stopped vite · port 5173 is free" width="58%">
 
-按 <kbd>x</kbd> 停止，<kbd>X</kbd> 強制停止。
+Press <kbd>x</kbd> to stop, <kbd>X</kbd> to force stop.
 
-- 先送 SIGTERM，3 秒沒結束才詢問要不要 SIGKILL
-- 送出前比對程序的啟動時間，PID 被重複使用也不會誤殺
-- 容器用 `docker stop`，不會誤殺 Docker Desktop
-- App 和系統服務預設隱藏，要停之前會多一句警告
+- Sends SIGTERM first, and only offers SIGKILL if the process is still alive after 3 seconds
+- Checks the process start time before signalling, so a reused PID never takes down the wrong process
+- Stops containers with `docker stop`, never by killing Docker Desktop
+- Hides apps and system services by default, and warns you before stopping one
 
 <br clear="right">
 
-### ⚡ 輕到可以一直開著
+### ⚡ Light enough to leave open
 
-| | macOS（M 系列） | Linux（i7-8700） |
+| | macOS (Apple Silicon) | Linux (i7-8700) |
 |---|---|---|
-| 一次掃描 | ~2 ms | ~4 ms |
+| One scan | ~2 ms | ~4 ms |
 | CPU | ~1% | ~0.9% |
-| 記憶體 | ~15 MB | ~19 MB |
-| 外部程式 | 不 fork `lsof`，直接讀 kernel | 不 fork `ss`，直接走 netlink |
+| Memory | ~15 MB | ~19 MB |
+| External commands | None: reads the kernel instead of forking `lsof` | None: talks netlink instead of forking `ss` |
 
-視窗失去焦點時掃描頻率自動降到三分之一，Docker 則靠事件串流即時更新。
+When the window loses focus, Ghosts scans a third as often. Docker updates arrive live over its event stream.
 
-## 安裝細節
+## Installation
 
-上面那行 script 會用系統原本的套件管理器安裝，所以之後的更新方式和其他軟體一樣：
+The script installs Ghosts with your system's own package manager, so it updates like everything else:
 
-| 系統 | 安裝方式 | 更新 | 移除 |
+| System | How it installs | Update | Uninstall |
 |---|---|---|---|
-| Ubuntu、Debian | 加入 ghosts 的 APT repo，再 `apt install`（會要 sudo 密碼） | `sudo apt update && sudo apt upgrade` | `sudo apt remove ghosts` |
-| 有 Homebrew | `brew install xamjiang/tap/ghosts` | `brew upgrade ghosts` | `brew uninstall ghosts` |
-| 其他 | 下載 binary、驗證 checksum，裝到 `~/.local/bin` | 再跑一次安裝指令 | `rm ~/.local/bin/ghosts` |
+| Ubuntu, Debian | Adds the ghosts APT repository, then `apt install` (asks for your sudo password) | `sudo apt update && sudo apt upgrade` | `sudo apt remove ghosts` |
+| With Homebrew | `brew install xamjiang/tap/ghosts` | `brew upgrade ghosts` | `brew uninstall ghosts` |
+| Anything else | Downloads the binary, verifies its checksum and installs it to `~/.local/bin` | Run the install command again | `rm ~/.local/bin/ghosts` |
 
-想先看 script 內容：[ghosts.xamjiang.com/install.sh](https://ghosts.xamjiang.com/install.sh)。
+Want to read the script first? It's at [ghosts.xamjiang.com/install.sh](https://ghosts.xamjiang.com/install.sh).
 
-不想用 script 的話，可以直接 `brew install xamjiang/tap/ghosts`、從 [Releases](https://github.com/xamjiang/ghosts/releases) 下載，或自己設定 APT：
+Prefer not to pipe to bash? Run `brew install xamjiang/tap/ghosts`, download from [Releases](https://github.com/xamjiang/ghosts/releases), or set up APT yourself:
 
 ```sh
 sudo install -d -m 0755 /etc/apt/keyrings
@@ -96,108 +98,108 @@ echo "deb [signed-by=/etc/apt/keyrings/ghosts.gpg] https://ghosts.xamjiang.com/a
 sudo apt update && sudo apt install ghosts
 ```
 
-## ⌨️ 使用
+## ⌨️ Usage
 
-### 參數
+### Flags
 
-| 參數 | 說明 |
+| Flag | Description |
 |---|---|
-| `-interval 2s` | port 掃描間隔（Docker 透過事件串流即時更新，不受影響） |
-| `-no-mouse` | 不接管滑鼠，保留終端機原生的文字選取 |
-| `-list [-all]` | 只印出一次清單後結束，方便在 script 中使用 |
+| `-interval 2s` | How often to rescan ports (Docker updates live over its event stream either way) |
+| `-no-mouse` | Don't capture the mouse, so the terminal's native text selection keeps working |
+| `-list [-all]` | Print the list once and exit, for scripts |
 
-### 快捷鍵
+### Keys
 
-| 鍵 | 動作 |
+| Key | Action |
 |---|---|
-| `↑↓` / `j k` | 移動 |
-| `⇥` / `1 2` | 切換 Ports / Containers |
-| `⏎` | 顯示或隱藏詳細資訊 |
-| `x` / `X` | 停止 / 強制停止（程序、容器或整個 compose 專案） |
-| `o` | 用瀏覽器開啟 |
-| `/` | 過濾（port、名稱、專案、image） |
-| `a` | 顯示 App 與系統服務 |
-| `s` | 排序：port / 耗電 / 記憶體 / 最新 / 名稱 |
-| `?` | 說明 |
+| `↑↓` / `j k` | Move |
+| `⇥` / `1 2` | Switch between Ports and Containers |
+| `⏎` | Show or hide details |
+| `x` / `X` | Stop / force stop (a process, a container or a whole compose project) |
+| `o` | Open in the browser |
+| `/` | Filter (port, name, project, image) |
+| `a` | Show apps and system services |
+| `s` | Sort by port / power / memory / newest / name |
+| `?` | Help |
 
-想更省電的話，可以用 `-interval 5s`。
+To save even more power, use `-interval 5s`.
 
-## 🔍 運作方式
+## 🔍 How it works
 
 <details>
-<summary>不靠 <code>lsof</code>、不 fork 任何程式，直接讀 kernel。點開看細節。</summary>
+<summary>No <code>lsof</code>, no forked processes: Ghosts reads the kernel directly. Expand for the details.</summary>
 
-以下是 macOS 的做法，Linux 的差異列在後面。
+This is how it works on macOS; the differences on Linux follow.
 
-- **Port**：不呼叫 `lsof`，而是直接透過 `sysctl` 和 libproc 讀取 kernel 的資料：一次 sysctl 取得整個程序表，再列舉你自己程序的 socket。一次掃描約 2ms，不會 fork 任何外部程式。程序的指令和工作目錄依 PID 快取。
-- **資源使用**：用 `proc_pid_rusage` 讀取每個程序累計的 CPU 時間、記憶體（和活動監視器的「記憶體」欄一致）和能耗。能耗計數器只有 Apple Silicon 才有，Intel Mac 上會隱藏 POWER 欄。每個服務的數值包含它的子程序，速率取最近約 6 秒的平均。
-- **容器資源**：用 Docker 的 one-shot stats 取得 CPU 和記憶體，每個容器只要幾 ms。容器的耗電無法單獨計算，所以改為顯示整個 Docker VM 的耗電和記憶體。
-- **Docker**：直接連 Docker Engine 的 unix socket（支援 Docker Desktop、OrbStack、Colima），訂閱事件串流即時更新。由 Docker 對外開的 port 會對應回實際的容器，停止時執行的是 `docker stop`，不會誤殺 Docker Desktop。
-- **停止程序**：先送 SIGTERM，3 秒內沒結束才會詢問是否 SIGKILL；送出前會比對程序啟動時間，避免 PID 被重複使用時誤殺其他程序。
+- **Ports**: instead of calling `lsof`, Ghosts reads the kernel's data directly through `sysctl` and libproc: one sysctl call for the whole process table, then the sockets of your own processes. A scan takes about 2 ms and never forks an external program. Each process's command and working directory are cached by PID.
+- **Resource usage**: `proc_pid_rusage` gives each process's accumulated CPU time, memory (matching Activity Monitor's Memory column) and energy. Only Apple Silicon has the energy counter, so the POWER column is hidden on Intel Macs. Each service's numbers include its child processes, and rates are averaged over the last ~6 seconds.
+- **Container resources**: CPU and memory come from Docker's one-shot stats, which take a few ms per container. A container's power can't be measured on its own, so Ghosts shows the power and memory of the whole Docker VM instead.
+- **Docker**: Ghosts talks to the Docker Engine's unix socket directly (Docker Desktop, OrbStack and Colima all work) and subscribes to its event stream for live updates. Ports published by Docker map back to their containers, and stopping one runs `docker stop`, so Docker Desktop itself is never killed.
+- **Stopping processes**: SIGTERM first, and SIGKILL only if you confirm after the process has had 3 seconds to exit. Before signalling, Ghosts checks the process start time, so a reused PID never hits another process.
 
-#### Linux 上的差異
+#### On Linux
 
-- **Port**：用 netlink（sock_diag，和 `ss` 相同的機制）只向 kernel 要 LISTEN 狀態的 socket，再從 `/proc/<pid>/fd` 對應回程序。對應結果會快取，只有出現新的 socket 時才重新查，或每 30 秒更新一次。程序表、CPU 和記憶體都來自 `/proc/<pid>/stat`，一次掃描約 4ms，一樣不 fork 任何外部程式。
-- **資源使用**：記憶體是 RSS（和 `top` 的 RES 一致）。Linux 沒有每個程序的能耗計數器，也不提供每個程序的 wakeup 次數，所以會隱藏 POWER 欄和 Wakeups。
-- **被遺忘的程序**：關掉終端機或 SSH 後留下的 server，會被 PID 1 或使用者的 `systemd --user` 收養。Ghosts 會看它的 cgroup：如果還留在原本 session 的 `*.scope`，就標記為「detached」；由 systemd 正常啟動的服務（`*.service`）則不會被誤判。
-- **Docker**：會依照 `docker context` 目前選的 context 決定要連哪個 socket，所以 Docker Engine 和 Docker Desktop 並存時，看到的會和 `docker ps` 一樣。Docker Engine 的容器直接跑在主機上，沒有 VM，這時摘要列會改成所有容器的 CPU 和記憶體加總。
-- **開啟瀏覽器**：用 `xdg-open`。透過 SSH 連線時，改用 OSC 52 把網址複製到你本機的剪貼簿（需要終端機支援，例如 iTerm2、Ghostty、kitty）。
+- **Ports**: netlink (sock_diag, the same mechanism `ss` uses) asks the kernel for LISTEN sockets only, which are then mapped back to processes through `/proc/<pid>/fd`. The mapping is cached and refreshed only when a new socket appears, or every 30 seconds. The process table, CPU and memory all come from `/proc/<pid>/stat`. A scan takes about 4 ms and, again, forks nothing.
+- **Resource usage**: memory is RSS (matching `top`'s RES). Linux has no per-process energy counter and doesn't report per-process wakeups, so the POWER column and Wakeups are hidden.
+- **Forgotten processes**: a server left behind by a closed terminal or SSH session gets adopted by PID 1 or the user's `systemd --user`. Ghosts looks at its cgroup: if it's still in its old session's `*.scope`, it's marked detached; services that systemd started on purpose (`*.service`) aren't.
+- **Docker**: Ghosts follows the context `docker context` has selected, so with Docker Engine and Docker Desktop side by side it shows the same containers as `docker ps`. Docker Engine runs containers on the host with no VM, so the summary line shows the CPU and memory of all containers combined instead.
+- **Opening the browser**: uses `xdg-open`. Over SSH, the URL is copied to your local clipboard with OSC 52 instead (if your terminal supports it, like iTerm2, Ghostty or kitty).
 
 </details>
 
-## 🛠 開發
+## 🛠 Development
 
 ```sh
 go build -o bin/ghosts ./cmd/ghosts && ./bin/ghosts
 go test ./...
 ```
 
-macOS 版用到 libproc，需要 cgo（安裝 Xcode Command Line Tools 即可）。Linux 版不需要 cgo，可以在 Mac 上直接交叉編譯：
+The macOS build uses libproc and needs cgo (the Xcode Command Line Tools are enough). The Linux build doesn't, so you can cross-compile it on a Mac:
 
 ```sh
 GOOS=linux GOARCH=amd64 go build -o bin/ghosts-linux ./cmd/ghosts
 ```
 
-平台相關的程式碼用檔名區分：`internal/ports/*_darwin.go`、`*_linux.go`，以及 `internal/ui/platform_*.go`。
+Platform-specific code lives in files named by platform: `internal/ports/*_darwin.go`, `*_linux.go` and `internal/ui/platform_*.go`.
 
-### README 截圖
+### README screenshots
 
-`docs/images/` 裡的截圖不是手動截的，而是用真正的 UI 程式碼搭配假資料渲染成 SVG，所以不會洩漏你電腦上的程序和路徑。改了 UI 之後重新產生：
+The screenshots in `docs/images/` aren't captured by hand: the real UI code renders made-up data to SVG, so they never leak the processes and paths on your machine. Regenerate them after changing the UI:
 
 ```sh
 GHOSTS_SCREENSHOTS=$PWD/docs/images go test -run TestScreenshots ./internal/ui
 ```
 
 <details>
-<summary><b>發佈新版本</b>：推一個 tag，macOS / Linux binary、<code>.deb</code>、APT repo 和 Homebrew formula 全部自動更新。</summary>
+<summary><b>Releasing</b>: push a tag, and the macOS / Linux binaries, <code>.deb</code> packages, APT repository and Homebrew formula all update themselves.</summary>
 
 ```sh
 git tag v0.6.0 && git push origin v0.6.0
 ```
 
-`.github/workflows/release.yml` 會依序做這些事：
+`.github/workflows/release.yml` then:
 
-1. 在 macOS 和 Ubuntu 上分別跑測試。
-2. macOS：編譯 universal binary（arm64 + amd64）。
-3. Linux：編譯 amd64 和 arm64，並用 `packaging/deb.sh` 打包成 `.deb`。`.deb` 的檔名不含版本號（`ghosts_linux_amd64.deb`），所以 `releases/latest/download/…` 這個網址永遠指向最新版。
-4. 建立 GitHub Release，附上所有檔案和 `checksums.txt`。
-5. 用 `packaging/ghosts.rb.tmpl` 產生同時支援 macOS 和 Linux 的 formula，推到 [xamjiang/homebrew-tap](https://github.com/xamjiang/homebrew-tap)。
-6. 用 `packaging/apt-repo.sh` 產生並簽章 APT 索引（`apt_InRelease`、`apt_Packages_amd64.gz`…），和 `.deb` 一起附在 Release 上。Release 先建成草稿，所有檔案上傳完才發佈，所以 apt 不會讀到只上傳一半的版本。
+1. Runs the tests on macOS and Ubuntu.
+2. macOS: builds a universal binary (arm64 + amd64).
+3. Linux: builds amd64 and arm64, and packages them as `.deb` with `packaging/deb.sh`. The `.deb` file names carry no version (`ghosts_linux_amd64.deb`), so `releases/latest/download/…` always points at the latest one.
+4. Creates the GitHub Release with every file and `checksums.txt`.
+5. Generates a formula for both macOS and Linux from `packaging/ghosts.rb.tmpl` and pushes it to [xamjiang/homebrew-tap](https://github.com/xamjiang/homebrew-tap).
+6. Generates and signs the APT index (`apt_InRelease`, `apt_Packages_amd64.gz`, …) with `packaging/apt-repo.sh` and attaches it to the Release next to the `.deb` files. The Release starts as a draft and is published only once every file is uploaded, so apt never sees a half-uploaded version.
 
-tag 可以加上預發佈後綴（例如 `v0.2.0-rc1`），`.deb` 的版本號會轉成 `0.2.0~rc1`，所以 apt 會把它排在正式版 `0.2.0` 之前。
+Tags can carry a pre-release suffix (like `v0.2.0-rc1`). The `.deb` version becomes `0.2.0~rc1`, so apt sorts it before the final `0.2.0`.
 
-需要的 GitHub secrets：
+Required GitHub secrets:
 
-| Secret | 用途 |
+| Secret | Used for |
 |---|---|
-| `HOMEBREW_TAP_TOKEN` | 只對 `homebrew-tap` 有 Contents 讀寫權限的 fine-grained token |
-| `APT_GPG_PRIVATE_KEY` | APT repo 的簽章私鑰（ASCII armor） |
-| `CLOUDFLARE_API_TOKEN` | 可以部署 Worker 的 Cloudflare API token（`worker.yml` 用） |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 帳號 ID |
+| `HOMEBREW_TAP_TOKEN` | A fine-grained token with Contents read/write on `homebrew-tap` only |
+| `APT_GPG_PRIVATE_KEY` | The APT repository's signing key (ASCII armored) |
+| `CLOUDFLARE_API_TOKEN` | A Cloudflare API token that can deploy Workers (used by `worker.yml`) |
+| `CLOUDFLARE_ACCOUNT_ID` | The Cloudflare account ID |
 
 #### ghosts.xamjiang.com
 
-`worker/` 是一個 Cloudflare Worker：`/install` 提供 install script（瀏覽器打開則顯示說明頁），`/apt/` 是 APT repo。APT repo 沒有自己的儲存空間：索引檔來自最新一個 GitHub Release 的附件，`.deb` 則重新導向到該版本 Release 的下載網址，公鑰（`packaging/apt-key.*`）打包在 Worker 裡。所以 apt 只看得到最新版；舊版可以從 Releases 下載 `.deb` 安裝。Script 是打包進 Worker 裡的，所以修改 `packaging/install.sh` 或 `worker/` 並推到 main 之後，`.github/workflows/worker.yml` 會自動重新部署。本機測試：
+`worker/` is a Cloudflare Worker: `/` is the website, `/install` serves the install script (or the website, to a browser) and `/apt/` is the APT repository. The repository has no storage of its own: the index files come from the latest GitHub Release's assets, `.deb` downloads redirect to that release, and the public key (`packaging/apt-key.*`) is bundled into the Worker. That means apt only sees the latest version; older `.deb` files are on the Releases page. The install script, the website and its images are bundled into the Worker too, so `.github/workflows/worker.yml` redeploys it whenever `packaging/install.sh`, `docs/images/` or `worker/` changes on main. To try it locally:
 
 ```sh
 cd worker && npx wrangler@4.137.0 dev
@@ -205,4 +207,4 @@ cd worker && npx wrangler@4.137.0 dev
 
 </details>
 
-<p align="center"><sub>MIT License · 用 <a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a> 打造 · <a href="https://ghosts.xamjiang.com">ghosts.xamjiang.com</a></sub></p>
+<p align="center"><sub>MIT License · Built with <a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a> · <a href="https://ghosts.xamjiang.com">ghosts.xamjiang.com</a></sub></p>

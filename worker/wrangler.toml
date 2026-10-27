@@ -7,10 +7,11 @@ workers_dev = false
 
 routes = [{ pattern = "ghosts.xamjiang.com", custom_domain = true }]
 
-# The install script, landing page and APT public key are bundled into the
-# Worker, so they are served from the edge with no origin fetch.
+# The install script, landing page, its images and the APT public key are
+# bundled into the Worker, so they are served from the edge with no origin
+# fetch.
 rules = [
-  { type = "Text", globs = ["**/*.sh", "**/*.html", "**/*.asc"], fallthrough = true },
+  { type = "Text", globs = ["**/*.sh", "**/*.html", "**/*.svg", "**/*.asc"], fallthrough = true },
   { type = "Data", globs = ["**/*.gpg"], fallthrough = true },
 ]
 
