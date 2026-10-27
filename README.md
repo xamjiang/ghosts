@@ -224,6 +224,14 @@ The screenshots in `docs/images/` aren't captured by hand: the real UI code rend
 GHOSTS_SCREENSHOTS=$PWD/docs/images go test -run TestScreenshots ./internal/ui
 ```
 
+`docs/images/social.png` is the preview card shown when the website or the repository is shared. Link previews need a PNG, so it's rendered from `social.svg` with Chrome. Regenerate it after editing the SVG, then upload it again under the repository's Settings → Social preview:
+
+```sh
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars \
+  --force-device-scale-factor=1 --window-size=1280,640 \
+  --screenshot="$PWD/docs/images/social.png" "file://$PWD/docs/images/social.svg"
+```
+
 <details>
 <summary><b>Releasing</b>: push a tag, and the macOS / Linux binaries, <code>.deb</code> packages, APT repository and Homebrew formula all update themselves.</summary>
 

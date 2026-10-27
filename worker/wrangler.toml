@@ -12,7 +12,7 @@ routes = [{ pattern = "ghosts.xamjiang.com", custom_domain = true }]
 # fetch.
 rules = [
   { type = "Text", globs = ["**/*.sh", "**/*.html", "**/*.svg", "**/*.asc"], fallthrough = true },
-  { type = "Data", globs = ["**/*.gpg"], fallthrough = true },
+  { type = "Data", globs = ["**/*.gpg", "**/*.png"], fallthrough = true },
 ]
 
 # The APT index and packages are assets of the GitHub releases.
