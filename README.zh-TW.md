@@ -19,6 +19,7 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 ```
 
 <p align="center">裝好後在終端機輸入 <code>ghosts</code> 就能開始。支援 macOS 13 以上和 Linux（amd64 / arm64）。<br>
+沒用過終端機？<a href="#第一次使用">看一步一步的教學 ↓</a><br>
 <sub>Ubuntu / Debian 會加入 APT repo、有 Homebrew 就用 brew，其他系統直接下載 binary。<a href="#安裝細節">安裝細節 ↓</a></sub></p>
 
 <br>
@@ -77,6 +78,58 @@ AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker �
 
 視窗失去焦點時掃描頻率自動降到三分之一，Docker 則靠事件串流即時更新。
 
+## 第一次使用
+
+沒用過終端機也沒關係，照著下面四步做，大約一分鐘就好。
+
+**1. 打開終端機**
+
+- macOS：按 <kbd>⌘</kbd> + <kbd>空白鍵</kbd> 打開 Spotlight，輸入「終端機」（或 `Terminal`），按 <kbd>Return</kbd>。
+- Ubuntu 和大多數 Linux 桌面：按 <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>T</kbd>。
+
+**2. 安裝 Ghosts**
+
+把這行貼進終端機，按 <kbd>Enter</kbd>：
+
+```sh
+curl -fsSL https://ghosts.xamjiang.com/install | bash
+```
+
+如果要求輸入密碼，請輸入你登入電腦用的密碼，再按 <kbd>Enter</kbd>。輸入密碼時畫面上不會出現任何字，這是正常的。看到 `✓ ghosts … is installed.` 就是裝好了。
+
+**3. 執行**
+
+輸入 `ghosts`，按 <kbd>Enter</kbd>：
+
+```sh
+ghosts
+```
+
+Ghosts 會直接在終端機視窗裡打開，列出所有正在 listen port 的程序。安裝只要做一次，以後想用的時候，打開終端機、輸入 `ghosts` 就好。
+
+**4. 關掉幽靈**
+
+用 <kbd>↑</kbd> <kbd>↓</kbd> 選一列，按 <kbd>⏎</kbd> 看詳細資訊。要關掉它就按 <kbd>x</kbd>，再按 <kbd>⏎</kbd> 確認。按 <kbd>q</kbd> 離開 Ghosts，按 <kbd>?</kbd> 看所有快捷鍵。
+
+<details>
+<summary>出現 <code>command not found: ghosts</code>？</summary>
+
+<br>
+
+在沒有 Homebrew 的 Mac 和部分 Linux 上，script 會把 Ghosts 裝到 `~/.local/bin`，但終端機可能還不會去那裡找程式（這時安裝結束會顯示 `~/.local/bin isn't on your PATH yet`）。執行下面這行一次，再開一個新的終端機視窗輸入 `ghosts` 就可以了：
+
+```sh
+# macOS（預設的 zsh）
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+
+# Linux（bash）
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+```
+
+在那之前，也可以用完整路徑執行：`~/.local/bin/ghosts`。
+
+</details>
+
 ## 安裝細節
 
 上面那行 script 會用系統原本的套件管理器安裝，所以之後的更新方式和其他軟體一樣：
@@ -121,6 +174,7 @@ sudo apt update && sudo apt install ghosts
 | `a` | 顯示 App 與系統服務 |
 | `s` | 排序：port / 耗電 / 記憶體 / 最新 / 名稱 |
 | `?` | 說明 |
+| `q` | 離開 |
 
 想更省電的話，可以用 `-interval 5s`。
 

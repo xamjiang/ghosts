@@ -19,6 +19,7 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 ```
 
 <p align="center">Then run <code>ghosts</code> in your terminal. Works on macOS 13+ and Linux (amd64 / arm64).<br>
+New to the terminal? <a href="#getting-started">Follow the step-by-step guide ↓</a><br>
 <sub>Adds an APT repository on Ubuntu / Debian, uses Homebrew if you have it, and downloads the binary everywhere else. <a href="#installation">Details ↓</a></sub></p>
 
 <br>
@@ -77,6 +78,58 @@ Press <kbd>x</kbd> to stop or <kbd>X</kbd> to force stop, then <kbd>⏎</kbd> to
 
 When the window loses focus, Ghosts scans a third as often. Docker updates arrive live over its event stream.
 
+## Getting started
+
+Never used a terminal before? No problem. These four steps take about a minute.
+
+**1. Open a terminal**
+
+- macOS: press <kbd>⌘</kbd> + <kbd>Space</kbd> to open Spotlight, type `Terminal` and press <kbd>Return</kbd>.
+- Ubuntu and most Linux desktops: press <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>T</kbd>.
+
+**2. Install Ghosts**
+
+Paste this line into the terminal and press <kbd>Enter</kbd>:
+
+```sh
+curl -fsSL https://ghosts.xamjiang.com/install | bash
+```
+
+If it asks for a password, type the one you use to log in to your computer and press <kbd>Enter</kbd>. Nothing shows up on screen while you type a password. That's normal. When you see `✓ ghosts … is installed.`, it's done.
+
+**3. Run it**
+
+Type `ghosts` and press <kbd>Enter</kbd>:
+
+```sh
+ghosts
+```
+
+Ghosts opens right inside the terminal window and lists everything that's listening on a port. You only install it once. From now on, whenever you want to use it, open a terminal and type `ghosts`.
+
+**4. Stop a ghost**
+
+Press <kbd>↑</kbd> <kbd>↓</kbd> to pick a row and <kbd>⏎</kbd> to see its details. To stop it, press <kbd>x</kbd>, then <kbd>⏎</kbd> to confirm. Press <kbd>q</kbd> to quit Ghosts, or <kbd>?</kbd> to see every key.
+
+<details>
+<summary>Getting <code>command not found: ghosts</code>?</summary>
+
+<br>
+
+On a Mac without Homebrew, and on some Linux systems, the script puts Ghosts in `~/.local/bin`, and your terminal may not look for programs there yet. (If so, the installer says `~/.local/bin isn't on your PATH yet`.) Run this once, then open a new terminal window and try `ghosts` again:
+
+```sh
+# macOS (zsh, the default shell)
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+
+# Linux (bash)
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+```
+
+Until then, you can run it with its full path: `~/.local/bin/ghosts`.
+
+</details>
+
 ## Installation
 
 The script installs Ghosts with your system's own package manager, so it updates like everything else:
@@ -121,6 +174,7 @@ sudo apt update && sudo apt install ghosts
 | `a` | Show apps and system services |
 | `s` | Sort by port / power / memory / newest / name |
 | `?` | Help |
+| `q` | Quit |
 
 To save even more power, use `-interval 5s`.
 
