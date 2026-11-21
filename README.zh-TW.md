@@ -22,6 +22,17 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 沒用過終端機？<a href="#第一次使用">看一步一步的教學 ↓</a><br>
 <sub>Ubuntu / Debian 會加入 APT repo、有 Homebrew 就用 brew，其他系統直接下載 binary。<a href="#安裝細節">安裝細節 ↓</a></sub></p>
 
+### macOS 選單列
+
+安裝 Go（版本見 go.mod）和 Xcode 命令列工具後，在專案根目錄執行：
+
+```sh
+./macos/build.sh
+open dist/Ghosts.app
+```
+
+點選右上角的端口計數，可查看開發服務的位址及程序樹記憶體。網頁服務會顯示首頁 HTML 的標題，點選即可用預設瀏覽器開啟。「開啟完整終端介面」可在 Terminal 使用內附的 Ghosts CLI。終端清單與 `ghosts -list` 也會顯示網頁標題。可將產出的 App 拖入「應用程式」。
+
 <br>
 
 <p align="center">

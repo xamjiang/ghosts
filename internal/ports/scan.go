@@ -34,6 +34,7 @@ type Listener struct {
 	ParentName string
 	Detached   bool // orphaned: its terminal or agent session is gone
 
+	Title   string // HTML title, when available
 	Name    string // friendly display name, e.g. "vite"
 	Runtime string // e.g. "node", "python"; empty for native binaries
 	Project string // best-guess project directory
@@ -82,9 +83,10 @@ func (l Listener) CommandLine() string {
 // milliseconds and spawns no processes. Slow-changing details (argv, working
 // directory) are cached by PID and start time.
 type Scanner struct {
-	mu    sync.Mutex
-	cache map[int]procInfo
-	usage *sampler
+	mu     sync.Mutex
+	titles map[string]titleEntry
+	cache  map[int]procInfo
+	usage  *sampler
 }
 
 func NewScanner() *Scanner {
@@ -151,7 +153,9 @@ func (s *Scanner) Scan() (Snapshot, error) {
 		}
 		return res[i].PID < res[j].PID
 	})
-	return s.measure(res, table), nil
+	snap := s.measure(res, table)
+	s.readTitles(snap.Listeners)
+	return snap, nil
 }
 
 // info returns cached details for pid, refreshing them if the PID now

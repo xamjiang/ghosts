@@ -152,7 +152,7 @@ func displayName(r row) string {
 
 func matchListener(r row, q string) bool {
 	l := r.l
-	fields := []string{strconv.Itoa(l.Port), l.Name, l.Runtime, l.Comm, tilde(l.Project), l.CommandLine(), strconv.Itoa(l.PID)}
+	fields := []string{strconv.Itoa(l.Port), l.Name, l.Title, l.Runtime, l.Comm, tilde(l.Project), l.CommandLine(), strconv.Itoa(l.PID)}
 	if r.ctr != nil {
 		fields = append(fields, r.ctr.Name, r.ctr.Image, r.ctr.Project, "docker")
 	}
