@@ -253,8 +253,18 @@ func (m *Model) update(msg tea.Msg) tea.Cmd {
 		// scanning still false here; either way the scan is now finished.
 		m.scanning = false
 		m.portsErr = msg.err
+		var notice tea.Cmd
 		if msg.err == nil {
 			m.markNew(msg.snap.Listeners, m.portsReady)
+			var opened []string
+			for _, l := range msg.snap.Listeners {
+				if l.NewPort {
+					opened = append(opened, fmt.Sprintf("%s :%d", l.Name, l.Port))
+				}
+			}
+			if len(opened) > 0 && (m.toast == nil || m.toast.kind == toastInfo) {
+				notice = m.showToast("👻 New ghost · "+strings.Join(opened, ", "), toastInfo)
+			}
 			m.listeners = msg.snap.Listeners
 			m.procs, m.vm = msg.snap.Procs, msg.snap.VM
 			m.hasEnergy, m.hasWakeups = msg.snap.HasEnergy, msg.snap.HasWakeups
@@ -267,7 +277,7 @@ func (m *Model) update(msg tea.Msg) tea.Cmd {
 			interval *= 3 // nobody is looking; save some cycles
 		}
 		gen := m.scanGen
-		return tea.Tick(interval, func(time.Time) tea.Msg { return scanTickMsg{gen} })
+		return tea.Batch(notice, tea.Tick(interval, func(time.Time) tea.Msg { return scanTickMsg{gen} }))
 
 	case scanTickMsg:
 		if msg.gen != m.scanGen {

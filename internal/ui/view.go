@@ -823,6 +823,9 @@ func (m Model) viewDetail(w, h int, bordered bool) []string {
 	case r.kind == rowListener:
 		l := r.l
 		title = l.Name
+		if l.Source != "" {
+			rows = append(rows, kv{"Launched from", l.Source, nil})
+		}
 		if l.Title != "" {
 			rows = append(rows, kv{"Page title", l.Title, nil})
 		}

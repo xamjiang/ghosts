@@ -65,7 +65,7 @@ func printList(all bool) error {
 	if snap.HasEnergy {
 		power = func(s string) string { return s + "\t" }
 	}
-	fmt.Fprintln(w, "PORT\tNAME\tPID\tMEM\t"+power("AVG POWER")+"UPTIME\tPROJECT\tTITLE")
+	fmt.Fprintln(w, "PORT\tNAME\tPID\tMEM\t"+power("AVG POWER")+"UPTIME\tPROJECT\tTITLE\tSOURCE")
 	for _, l := range snap.Listeners {
 		if l.Kind != ports.KindDev && !all {
 			continue
@@ -75,8 +75,8 @@ func printList(all bool) error {
 			name += " (" + l.Runtime + ")"
 		}
 		proj := strings.Replace(l.Project, home, "~", 1)
-		fmt.Fprintf(w, "%d\t%s\t%d\t%.0f MB\t%s%s\t%s\t%s\n", l.Port, name, l.PID, float64(l.Usage.Mem)/1e6,
-			power(fmt.Sprintf("%.1f mW", l.Usage.AvgPower*1000)), time.Since(l.Started).Round(time.Second), proj, l.Title)
+		fmt.Fprintf(w, "%d\t%s\t%d\t%.0f MB\t%s%s\t%s\t%s\t%s\n", l.Port, name, l.PID, float64(l.Usage.Mem)/1e6,
+			power(fmt.Sprintf("%.1f mW", l.Usage.AvgPower*1000)), time.Since(l.Started).Round(time.Second), proj, l.Title, l.Source)
 	}
 	return w.Flush()
 }

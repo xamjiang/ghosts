@@ -22,6 +22,7 @@ const (
 
 // Listener is one process listening on one TCP port.
 type Listener struct {
+	NewPort    bool // first observed after a successful baseline scan
 	Port       int
 	PID        int
 	PPID       int
@@ -31,6 +32,7 @@ type Listener struct {
 	Args       []string
 	Cwd        string
 	Started    time.Time
+	Source     string // nearest recognized launcher in the observed ancestry
 	ParentName string
 	Detached   bool // orphaned: its terminal or agent session is gone
 
@@ -83,10 +85,11 @@ func (l Listener) CommandLine() string {
 // milliseconds and spawns no processes. Slow-changing details (argv, working
 // directory) are cached by PID and start time.
 type Scanner struct {
-	mu     sync.Mutex
-	titles map[string]titleEntry
-	cache  map[int]procInfo
-	usage  *sampler
+	openPorts map[int]bool
+	mu        sync.Mutex
+	titles    map[string]titleEntry
+	cache     map[int]procInfo
+	usage     *sampler
 }
 
 func NewScanner() *Scanner {
@@ -129,6 +132,11 @@ func (s *Scanner) Scan() (Snapshot, error) {
 			continue // exited mid-scan
 		}
 		live[l.PID] = true
+		if info.Source == "" {
+			info.Source = launchSource(l.PID, table, executablePath)
+			s.cache[l.PID] = info
+		}
+		l.Source = info.Source
 		l.PPID = table.ppid[l.PID]
 		l.Started, l.Comm, l.Exe, l.Args, l.Cwd = info.Started, info.Comm, info.Exe, info.Args, info.Cwd
 		l.Detached = detached(l.PID, l.PPID, table)
@@ -142,7 +150,7 @@ func (s *Scanner) Scan() (Snapshot, error) {
 		res = append(res, *l)
 	}
 	for pid := range s.cache {
-		if !live[pid] {
+		if !live[pid] && (s.cache[pid].Source == "" || !s.cache[pid].Started.Equal(table.started[pid])) {
 			delete(s.cache, pid)
 		}
 	}
@@ -154,8 +162,23 @@ func (s *Scanner) Scan() (Snapshot, error) {
 		return res[i].PID < res[j].PID
 	})
 	snap := s.measure(res, table)
+	s.markNewPorts(snap.Listeners)
 	s.readTitles(snap.Listeners)
 	return snap, nil
+}
+
+// Notify once per newly listening development port, even with shared workers.
+func (s *Scanner) markNewPorts(rows []Listener) {
+	current := make(map[int]bool)
+	for i := range rows {
+		l := &rows[i]
+		if l.Kind != KindDev {
+			continue
+		}
+		l.NewPort = s.openPorts != nil && !s.openPorts[l.Port] && !current[l.Port]
+		current[l.Port] = true
+	}
+	s.openPorts = current
 }
 
 // info returns cached details for pid, refreshing them if the PID now
