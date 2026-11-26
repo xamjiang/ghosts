@@ -14,6 +14,8 @@ import (
 var scanner = ports.NewScanner()
 
 type row struct {
+	Source  string `json:"source"`
+	NewPort bool   `json:"newPort"`
 	Title   string `json:"title"`
 	ID      string `json:"id"`
 	Name    string `json:"name"`
@@ -34,7 +36,7 @@ func ghostsSnapshot() *C.char {
 			continue
 		}
 		rows = append(rows, row{
-			Title: l.Title, ID: l.Key(), Name: l.Name, Address: l.Address(),
+			Source: l.Source, NewPort: l.NewPort, Title: l.Title, ID: l.Key(), Name: l.Name, Address: l.Address(),
 			Service: l.Service(), Memory: l.Usage.Mem,
 		})
 	}

@@ -31,7 +31,9 @@ With Go (see go.mod) and the Xcode Command Line Tools installed, run from the re
 open dist/Ghosts.app
 ```
 
-Click the port count in the menu bar to see local development services and their process-tree memory usage. Web services show the title from their homepage HTML. Select one to open it in your default browser, or use the terminal button for the bundled Ghosts CLI. Page titles also appear in the terminal interface and in `ghosts -list`. You can also drag the built app into Applications.
+Click the menu bar capsule to see the full listening address, page title or process name, launch source (when identifiable), and process-tree memory. Select a web service to open it in your default browser. **Open Ghosts CLI** launches the bundled terminal interface. The CLI and `ghosts -list` also show page titles. You can drag the built app into Applications.
+
+The first scan establishes a baseline. When a new development port appears, the capsule expands for five seconds. Choose **English** or **繁體中文** in the panel to set the interface and alert language. The interactive CLI shows a brief notice in the terminal.
 
 <br>
 
