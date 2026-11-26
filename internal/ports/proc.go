@@ -8,6 +8,7 @@ import (
 
 // procInfo is the slow-to-gather, rarely-changing part of a process.
 type procInfo struct {
+	Source  string
 	Started time.Time
 	Comm    string
 	Exe     string

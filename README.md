@@ -22,6 +22,19 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 New to the terminal? <a href="#getting-started">Follow the step-by-step guide ↓</a><br>
 <sub>Adds an APT repository on Ubuntu / Debian, uses Homebrew if you have it, and downloads the binary everywhere else. <a href="#installation">Details ↓</a></sub></p>
 
+### macOS menu bar
+
+With Go (see go.mod) and the Xcode Command Line Tools installed, run from the repository root:
+
+```sh
+./macos/build.sh
+open dist/Ghosts.app
+```
+
+Click the menu bar capsule to see the full listening address, page title or process name, launch source (when identifiable), and process-tree memory. Select a web service to open it in your default browser. **Open Ghosts CLI** launches the bundled terminal interface. The CLI and `ghosts -list` also show page titles. You can drag the built app into Applications.
+
+The first scan establishes a baseline. When a new development port appears, the capsule expands for five seconds. Choose **English** or **繁體中文** in the panel to set the interface and alert language. The interactive CLI shows a brief notice in the terminal.
+
 <br>
 
 <p align="center">

@@ -135,3 +135,11 @@ const initName = "launchd"
 // detached reports whether a process lost its session: on macOS orphans are
 // always adopted by launchd.
 func detached(pid, ppid int, t procTable) bool { return ppid == 1 }
+
+func executablePath(pid int) string {
+	var path [C.PROC_PIDPATHINFO_MAXSIZE]C.char
+	if C.proc_pidpath(C.int(pid), unsafe.Pointer(&path[0]), C.uint32_t(len(path))) <= 0 {
+		return ""
+	}
+	return C.GoString(&path[0])
+}
