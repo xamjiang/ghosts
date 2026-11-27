@@ -1,9 +1,10 @@
-// Package ports discovers TCP listeners on macOS and Linux and describes the
+// Package ports discovers TCP listeners on macOS, Linux and Windows and describes the
 // processes behind them in human terms (project directory, friendly name, uptime).
 package ports
 
 import (
 	"fmt"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -36,11 +37,12 @@ type Listener struct {
 	ParentName string
 	Detached   bool // orphaned: its terminal or agent session is gone
 
-	Title   string // HTML title, when available
-	Name    string // friendly display name, e.g. "vite"
-	Runtime string // e.g. "node", "python"; empty for native binaries
-	Project string // best-guess project directory
-	Kind    Kind
+	WebScheme string // verified HTTP or HTTPS on the local listening address
+	Title     string // HTML title, when available
+	Name      string // friendly display name, e.g. "vite"
+	Runtime   string // e.g. "node", "python"; empty for native binaries
+	Project   string // best-guess project directory
+	Kind      Kind
 
 	Usage Usage // the process plus its descendants
 	Tree  []int // PIDs counted in Usage
@@ -57,6 +59,18 @@ type Snapshot struct {
 
 // Key identifies a listener across scans.
 func (l Listener) Key() string { return fmt.Sprintf("p:%d:%d", l.PID, l.Port) }
+
+// SharedPortProxy identifies Windows port forwarders that can serve several unrelated workloads.
+func (l Listener) SharedPortProxy() bool {
+	if runtime.GOOS != "windows" {
+		return false
+	}
+	switch strings.ToLower(l.Comm) {
+	case "com.docker.backend.exe", "com.docker.proxy.exe", "wslrelay.exe", "wslhost.exe", "vpnkit.exe":
+		return true
+	}
+	return false
+}
 
 // Public reports whether the socket accepts connections from other machines.
 func (l Listener) Public() bool {
@@ -110,7 +124,11 @@ func (s *Scanner) Scan() (Snapshot, error) {
 	type key struct{ pid, port int }
 	byKey := map[key]*Listener{}
 	var order []key
-	for _, so := range listenSockets(table.own) {
+	sockets, err := scanSockets(table.own)
+	if err != nil {
+		return Snapshot{}, fmt.Errorf("reading listening sockets: %w", err)
+	}
+	for _, so := range sockets {
 		k := key{so.pid, so.port}
 		l := byKey[k]
 		if l == nil {

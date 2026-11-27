@@ -3,6 +3,7 @@ package ports
 import (
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 )
 
@@ -30,7 +31,7 @@ func describe(l *Listener) {
 	l.Project = projectDir(l)
 }
 
-func friendlyName(l *Listener) (name, runtime string) {
+func friendlyName(l *Listener) (string, string) {
 	base := filepath.Base(l.Exe)
 	if l.Exe == "" {
 		base = l.Comm
@@ -40,6 +41,9 @@ func friendlyName(l *Listener) (name, runtime string) {
 		if _, ok := interpreters[strings.ToLower(l.Args[0])]; ok {
 			base = l.Args[0]
 		}
+	}
+	if runtime.GOOS == "windows" && strings.EqualFold(filepath.Ext(base), ".exe") {
+		base = base[:len(base)-4]
 	}
 	lower := strings.ToLower(base)
 	rt, isInterp := interpreters[lower]
@@ -92,7 +96,7 @@ func friendlyName(l *Listener) (name, runtime string) {
 // nodeModulesPackage extracts "vite" from ".../node_modules/.bin/vite" or
 // ".../node_modules/vite/bin/vite.js", and "@scope/pkg" for scoped packages.
 func nodeModulesPackage(p string) string {
-	p = strings.TrimPrefix(p, "file://")
+	p = filepath.ToSlash(strings.TrimPrefix(p, "file://"))
 	i := strings.LastIndex(p, "node_modules/")
 	if i < 0 {
 		return ""
@@ -125,10 +129,10 @@ func projectDir(l *Listener) string {
 	}
 	for _, a := range l.Args[min(1, len(l.Args)):] {
 		a = strings.TrimPrefix(a, "file://")
-		if !strings.HasPrefix(a, "/") {
+		if !filepath.IsAbs(a) && !strings.HasPrefix(a, "/") {
 			continue
 		}
-		if i := strings.Index(a, "/node_modules/"); i > 0 {
+		if i := strings.Index(filepath.ToSlash(a), "/node_modules/"); i > 0 {
 			return a[:i]
 		}
 	}

@@ -33,6 +33,9 @@ func main() {
 		fmt.Println("ghosts", version)
 		return
 	}
+	if runDesktopMode(*interval) {
+		return
+	}
 	if *list {
 		if err := printList(*all); err != nil {
 			fmt.Fprintln(os.Stderr, "ghosts:", err)

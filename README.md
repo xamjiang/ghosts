@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/xamjiang/ghosts/releases/latest"><img src="https://img.shields.io/github/v/release/xamjiang/ghosts?style=flat-square&color=0A84FF&label=release" alt="Release"></a>
   <a href="https://github.com/xamjiang/ghosts/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/xamjiang/ghosts/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
-  <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux-1C1C1E?style=flat-square&logo=apple&logoColor=white" alt="macOS · Linux">
+  <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-1C1C1E?style=flat-square&logo=apple&logoColor=white" alt="macOS · Linux · Windows">
   <img src="https://img.shields.io/github/go-mod/go-version/xamjiang/ghosts?style=flat-square&color=00ADD8&logo=go&logoColor=white" alt="Go">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/xamjiang/ghosts?style=flat-square&color=30D158" alt="MIT"></a>
 </p>
@@ -21,6 +21,16 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 <p align="center">Then run <code>ghosts</code> in your terminal. Works on macOS 13+ and Linux (amd64 / arm64).<br>
 New to the terminal? <a href="#getting-started">Follow the step-by-step guide ↓</a><br>
 <sub>Adds an APT repository on Ubuntu / Debian, uses Homebrew if you have it, and downloads the binary everywhere else. <a href="#installation">Details ↓</a></sub></p>
+
+### Windows terminal and system tray
+
+For Windows 10/11, extract the Windows ZIP for your processor (`amd64` for Intel/AMD x64 or `arm64` for Windows on Arm). Keep both executables in the same folder.
+
+- Double-click **GhostsTray.exe** and click the ghost in the notification area to see listening addresses, page titles, launch sources, and process-tree memory. Select a web service to open it. The tray supports English and Traditional Chinese and alerts you when a new development port appears.
+- Run **ghosts.exe** in Windows Terminal for the interactive monitor. Use `.\ghosts.exe -list` for a one-time list. Docker Desktop integration uses the local Engine named pipe.
+- A normal stop asks the process’s windows to close. For a console server without a window, Ghosts offers a separate force-stop confirmation. CPU and working-set memory are available on Windows. Power and wakeup counters are platform-specific.
+
+To build the ZIP from this branch, run `.\windows\build.ps1` in PowerShell with the Go version in go.mod and .NET Framework 4.8 installed. Look under `dist\` for the package.
 
 ### macOS menu bar
 
@@ -73,7 +83,7 @@ AI coding tools like Claude Code and Codex start dev servers and Docker services
 
 Press <kbd>x</kbd> to stop or <kbd>X</kbd> to force stop, then <kbd>⏎</kbd> to confirm.
 
-- Sends SIGTERM first, and only offers SIGKILL if the process is still alive after 3 seconds
+- On macOS and Linux, sends SIGTERM first, and only offers SIGKILL if the process is still alive after 3 seconds
 - Checks the process start time before signalling, so a reused PID never takes down the wrong process
 - Stops containers with `docker stop`, never by killing Docker Desktop
 - Hides apps and system services by default, and warns you before stopping one

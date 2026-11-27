@@ -23,9 +23,9 @@ func TestLocalPageTitle(t *testing.T) {
 		} else {
 			srv.Start()
 		}
-		title := pageTitle(context.Background(), strings.SplitN(srv.URL, "://", 2)[1])
+		title, scheme := inspectPage(context.Background(), strings.SplitN(srv.URL, "://", 2)[1])
 		srv.Close()
-		if title != "Ghosts & 本機" {
+		if scheme != strings.SplitN(srv.URL, "://", 2)[0] || title != "Ghosts & 本機" {
 			t.Fatalf("TLS=%v, got %q", secure, title)
 		}
 	}

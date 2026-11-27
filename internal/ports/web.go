@@ -42,7 +42,7 @@ func (l Listener) Address() string {
 }
 
 type titleEntry struct {
-	title            string
+	title, scheme    string
 	updated, started time.Time
 	address          string
 }
@@ -64,7 +64,7 @@ func (s *Scanner) readTitles(rows []Listener) {
 		}
 		key := l.Key()
 		if prev, ok := s.titles[key]; ok && prev.started.Equal(l.Started) && prev.address == l.Address() && now.Sub(prev.updated) < time.Minute {
-			l.Title = prev.title
+			l.Title, l.WebScheme = prev.title, prev.scheme
 			next[key] = prev
 			continue
 		}
@@ -74,7 +74,7 @@ func (s *Scanner) readTitles(rows []Listener) {
 			go func() {
 				defer workers.Done()
 				defer func() { <-slots }()
-				l.Title = pageTitle(ctx, l.Address())
+				l.Title, l.WebScheme = inspectPage(ctx, l.Address())
 				updated[i] = true
 			}()
 		case <-ctx.Done():
@@ -83,7 +83,7 @@ func (s *Scanner) readTitles(rows []Listener) {
 	workers.Wait()
 	for i, l := range rows {
 		if updated[i] {
-			next[l.Key()] = titleEntry{l.Title, now, l.Started, l.Address()}
+			next[l.Key()] = titleEntry{l.Title, l.WebScheme, now, l.Started, l.Address()}
 		}
 	}
 	s.titles = next
@@ -102,11 +102,11 @@ var titleClient = &http.Client{
 	},
 }
 
-func pageTitle(ctx context.Context, address string) string {
+func inspectPage(ctx context.Context, address string) (title, schemeUsed string) {
 	for _, scheme := range []string{"https", "http"} {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, scheme+"://"+address+"/", nil)
 		if err != nil {
-			return ""
+			return "", ""
 		}
 		res, err := titleClient.Do(req)
 		if err != nil {
@@ -114,21 +114,21 @@ func pageTitle(ctx context.Context, address string) string {
 		}
 		defer res.Body.Close()
 		if res.StatusCode < 200 || res.StatusCode >= 300 {
-			return ""
+			return "", scheme
 		}
 		z := html.NewTokenizer(io.LimitReader(res.Body, 128<<10))
 		for {
 			switch z.Next() {
 			case html.ErrorToken:
-				return ""
+				return "", scheme
 			case html.StartTagToken:
 				name, _ := z.TagName()
 				switch string(name) {
 				case "body":
-					return ""
+					return "", scheme
 				case "title":
 					if z.Next() != html.TextToken {
-						return ""
+						return "", scheme
 					}
 					plain := strings.Map(func(r rune) rune {
 						if unicode.IsControl(r) || unicode.In(r, unicode.Cf) {
@@ -137,10 +137,10 @@ func pageTitle(ctx context.Context, address string) string {
 						return r
 					}, string(z.Text()))
 					runes := []rune(strings.Join(strings.Fields(plain), " "))
-					return string(runes[:min(len(runes), 200)])
+					return string(runes[:min(len(runes), 200)]), scheme
 				}
 			}
 		}
 	}
-	return ""
+	return "", ""
 }

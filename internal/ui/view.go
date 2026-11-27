@@ -937,7 +937,7 @@ func (m Model) viewHelp(h int) []string {
 		}},
 		{"Act", []item{
 			{"x", "Stop process, container or compose project"},
-			{"X", "Force stop (SIGKILL / docker kill)"},
+			{"X", "Force stop process or container"},
 			{"o", "Open in browser"},
 		}},
 		{"View", []item{

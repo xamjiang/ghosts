@@ -13,7 +13,7 @@ func BenchmarkScan(b *testing.B) {
 func BenchmarkSockets(b *testing.B) {
 	t, _ := readProcTable()
 	for b.Loop() {
-		listenSockets(t.own)
+		scanSockets(t.own)
 	}
 }
 

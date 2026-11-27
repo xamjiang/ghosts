@@ -15,7 +15,7 @@ var home, _ = os.UserHomeDir()
 
 // tilde shortens paths under the home directory.
 func tilde(p string) string {
-	if home != "" && (p == home || strings.HasPrefix(p, home+"/")) {
+	if home != "" && (p == home || (strings.HasPrefix(p, home+"/") || strings.HasPrefix(p, home+string(filepath.Separator)))) {
 		return "~" + p[len(home):]
 	}
 	return p

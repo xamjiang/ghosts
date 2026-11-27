@@ -655,7 +655,11 @@ func urlFor(r *row) string {
 	case r == nil:
 		return ""
 	case r.kind == rowListener:
-		return fmt.Sprintf("http://localhost:%d", r.l.Port)
+		scheme := r.l.WebScheme
+		if scheme == "" {
+			scheme = "http"
+		}
+		return scheme + "://" + r.l.Address()
 	case r.kind == rowContainer && len(r.ctr.Ports) > 0:
 		return fmt.Sprintf("http://localhost:%d", r.ctr.Ports[0].Public)
 	}
@@ -722,6 +726,10 @@ func confirmStop(l ports.Listener, force bool) *confirm {
 func stopCmd(l ports.Listener, force bool) tea.Cmd {
 	return func() tea.Msg {
 		msg := actionMsg{keys: []string{l.Key()}}
+		if l.SharedPortProxy() {
+			msg.err = fmt.Errorf("%s forwards ports for other services. Stop the container or service that owns this port.", l.Name)
+			return msg
+		}
 		var gone bool
 		var err error
 		if force {
@@ -737,11 +745,11 @@ func stopCmd(l ports.Listener, force bool) tea.Cmd {
 		case gone:
 			msg.ok = fmt.Sprintf("Stopped %s · port %d is free", l.Name, l.Port)
 		case force:
-			msg.err = fmt.Errorf("%s is still running after SIGKILL", l.Name)
+			msg.err = fmt.Errorf("%s is still running after the force stop request", l.Name)
 		default:
 			retry := confirmStop(l, true)
 			retry.title = fmt.Sprintf("%s is still running. Force stop?", l.Name)
-			retry.warn = "It ignored the request to stop for 3 seconds."
+			retry.warn = "The process did not exit after the stop request."
 			msg.retry = retry
 		}
 		return msg
