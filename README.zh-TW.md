@@ -24,6 +24,10 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 
 ### Windows 終端機與系統匣
 
+![Windows 本機服務面板，顯示四個範例服務](docs/images/windows-services.png)
+
+[新連接埠提示](docs/images/windows-new-port.png) · [Windows 終端機畫面](docs/images/windows-cli.png)
+
 Windows 10／11 請解壓縮符合處理器架構的 Windows ZIP。Intel／AMD x64 選 `amd64`，Windows on Arm 選 `arm64`。兩個執行檔請放在同一個資料夾。
 
 - 雙擊 **GhostsTray.exe**，點通知區域的幽靈圖示，即可查看監聽位址、網頁標題、啟動來源與程序樹記憶體。點網頁服務可在預設瀏覽器開啟。白色面板沿用 macOS 的服務列表。新開發連接埠出現時，工作列旁會彈出 Ghosts 視窗，停留五秒，點一下即可查看服務。面板與提示都支援繁體中文和英文。

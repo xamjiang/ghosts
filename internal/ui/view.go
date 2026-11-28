@@ -824,7 +824,7 @@ func (m Model) viewDetail(w, h int, bordered bool) []string {
 		l := r.l
 		title = l.Name
 		if l.Source != "" {
-			rows = append(rows, kv{"Launched from", l.Source, nil})
+			rows = append(rows, kv{"Source", l.Source, nil})
 		}
 		if l.Title != "" {
 			rows = append(rows, kv{"Page title", l.Title, nil})

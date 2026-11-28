@@ -24,6 +24,10 @@ New to the terminal? <a href="#getting-started">Follow the step-by-step guide â†
 
 ### Windows terminal and system tray
 
+![Windows service panel showing four sample listeners](docs/images/windows-services.png)
+
+[New-port popup](docs/images/windows-new-port.png) Â· [Windows terminal view](docs/images/windows-cli.png)
+
 For Windows 10/11, extract the Windows ZIP for your processor (`amd64` for Intel/AMD x64 or `arm64` for Windows on Arm). Keep both executables in the same folder.
 
 - Double-click **GhostsTray.exe** and click the ghost in the notification area to see listening addresses, page titles, launch sources, and process-tree memory. Select a web service to open it. The flat white panel follows the macOS service list. A new development port opens a five-second Ghosts popup beside the taskbar. Click it to view services. Both the panel and popup support English and Traditional Chinese.
