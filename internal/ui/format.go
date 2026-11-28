@@ -156,41 +156,36 @@ func wrapCommand(s string, w int) []string {
 		return []string{s}
 	}
 	var lines []string
-	var cur []rune
+	var line strings.Builder
+	width := 0
 	flush := func() {
-		lines = append(lines, strings.TrimRight(string(cur), " "))
-		cur = cur[:0]
+		lines = append(lines, strings.TrimRight(line.String(), " "))
+		line.Reset()
+		width = 0
 	}
-	rs := []rune(s)
-	for len(rs) > 0 {
-		// The next piece runs up to and including a breakpoint.
-		n := 0
-		for n < len(rs) && rs[n] != ' ' && rs[n] != '/' {
-			n++
+	for len(s) > 0 {
+		end := strings.IndexAny(s, " /\\")
+		if end < 0 {
+			end = len(s)
+		} else {
+			end++
 		}
-		n = min(n+1, len(rs))
-		piece := rs[:n]
-		rs = rs[n:]
+		piece := s[:end]
+		s = s[end:]
+		if width > 0 && width+ansi.StringWidth(strings.TrimSuffix(piece, " ")) > w {
+			flush()
+		}
 		for len(piece) > 0 {
-			room := w - len(cur)
-			fits := len(piece)
-			if piece[len(piece)-1] == ' ' {
-				fits-- // a trailing space may hang past the edge
-			}
-			switch {
-			case fits <= room:
-				cur = append(cur, piece...)
-				piece = nil
-			case len(cur) > 0:
-				flush()
-			default:
-				cur = append(cur, piece[:w]...)
-				piece = piece[w:]
+			cluster, cells := ansi.FirstGraphemeCluster(piece, ansi.GraphemeWidth)
+			if width > 0 && width+cells > w && cluster != " " {
 				flush()
 			}
+			line.WriteString(cluster)
+			width += cells
+			piece = piece[len(cluster):]
 		}
 	}
-	if len(cur) > 0 || len(lines) == 0 {
+	if line.Len() > 0 || len(lines) == 0 {
 		flush()
 	}
 	return lines

@@ -26,7 +26,7 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 
 Windows 10／11 請解壓縮符合處理器架構的 Windows ZIP。Intel／AMD x64 選 `amd64`，Windows on Arm 選 `arm64`。兩個執行檔請放在同一個資料夾。
 
-- 雙擊 **GhostsTray.exe**，點通知區域的幽靈圖示，即可查看監聽位址、網頁標題、啟動來源與程序樹記憶體。點網頁服務可在預設瀏覽器開啟。系統匣支援繁體中文、英文及新開發連接埠提醒。
+- 雙擊 **GhostsTray.exe**，點通知區域的幽靈圖示，即可查看監聽位址、網頁標題、啟動來源與程序樹記憶體。點網頁服務可在預設瀏覽器開啟。白色面板沿用 macOS 的服務列表。新開發連接埠出現時，工作列旁會彈出 Ghosts 視窗，停留五秒，點一下即可查看服務。面板與提示都支援繁體中文和英文。
 - 在 Windows 終端機執行 **ghosts.exe** 開啟互動介面，或用 `.\ghosts.exe -list` 列出一次。Docker Desktop 透過本機 Engine 具名管道連線。
 - 一般停止會要求該程序的視窗關閉。無視窗的主控台服務會另外詢問是否強制停止。Windows 顯示 CPU 與工作集記憶體，耗電與喚醒次數依平台而異。
 

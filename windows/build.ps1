@@ -17,7 +17,10 @@ try {
     $env:GOARCH = $Arch
     go build -trimpath -ldflags "-s -w -X main.version=$Version" -o "$dest/ghosts.exe" ./cmd/ghosts
     if ($LASTEXITCODE -ne 0) { throw 'Go build failed' }
-    & $compiler /nologo /target:winexe /platform:anycpu /optimize+ /utf8output /codepage:65001 "/out:$dest\GhostsTray.exe" /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll "$PSScriptRoot\Tray.cs"
+    $framework = Split-Path -Parent $compiler
+    $wpf = Join-Path $framework 'WPF'
+    $references = @("/r:$wpf\PresentationFramework.dll", "/r:$wpf\PresentationCore.dll", "/r:$wpf\WindowsBase.dll", "/r:$framework\System.Xaml.dll")
+    & $compiler @references "/resource:$PSScriptRoot\Panel.xaml,Panel.xaml" "/resource:$PSScriptRoot\PortAlert.xaml,PortAlert.xaml" /nologo /target:winexe /platform:anycpu /optimize+ /utf8output /codepage:65001 "/out:$dest\GhostsTray.exe" /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll "$PSScriptRoot\Tray.cs" "$PSScriptRoot\DesktopPanel.cs"
     if ($LASTEXITCODE -ne 0) { throw 'Tray build failed' }
 
     $docs = 'LICENSE', 'README.md', 'README.zh-TW.md'

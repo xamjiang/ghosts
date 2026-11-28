@@ -1,0 +1,73 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="Ghosts · Local services" Width="632" SizeToContent="Height" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+ WindowStartupLocation="Manual" Background="White" Foreground="#202124" FontFamily="Segoe UI, Microsoft JhengHei UI" FontSize="13" UseLayoutRounding="True">
+ <Window.Resources>
+  <Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="TextTrimming" Value="CharacterEllipsis"/></Style>
+  <Style x:Key="action" TargetType="Button">
+   <Setter Property="Cursor" Value="Hand"/><Setter Property="Foreground" Value="#34373D"/><Setter Property="Padding" Value="10,5"/>
+   <Setter Property="Background" Value="#F5F5F6"/><Setter Property="BorderBrush" Value="#DCDDE0"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+    <Border x:Name="box" CornerRadius="5" Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="box" Property="Background" Value="#E9EAED"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="box" Property="BorderBrush" Value="#0066CC"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+ </Window.Resources>
+ <Border CornerRadius="12" BorderBrush="#CFD1D5" BorderThickness="1" Background="White">
+  <StackPanel>
+   <DockPanel Margin="18,13,18,12">
+    <Button x:Name="ClosePanel" DockPanel.Dock="Right" Margin="8,0,0,0" Width="29" Padding="0" Background="White" BorderBrush="White" Style="{StaticResource action}">
+     <Path Stroke="#646971" StrokeThickness="1.4" Data="M 1,1 L 10,10 M 10,1 L 1,10"/>
+    </Button>
+    <Button x:Name="Language" DockPanel.Dock="Right" Style="{StaticResource action}" FontSize="12" AutomationProperties.Name="Language"/>
+    <StackPanel Orientation="Horizontal">
+     <TextBlock Text="👻" FontFamily="Segoe UI Emoji" FontSize="22" Margin="0,0,9,0"/>
+     <TextBlock x:Name="Heading" FontWeight="SemiBold" FontSize="19"/>
+    </StackPanel>
+   </DockPanel>
+   <Border BorderBrush="#E1E2E5" BorderThickness="0,1,0,0"/>
+   <Grid x:Name="Table" Grid.IsSharedSizeScope="True">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <Grid x:Name="ColumnHeaders" Margin="18,9,18,4" TextElement.FontSize="11" TextElement.FontWeight="SemiBold" TextElement.Foreground="#656971">
+     <Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="Address" Width="Auto" MinWidth="132" MaxWidth="210"/><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/><ColumnDefinition Width="25"/></Grid.ColumnDefinitions>
+     <TextBlock x:Name="AddressLabel" Margin="7,0,0,0"/><TextBlock x:Name="ServiceLabel" Grid.Column="1" Margin="10,0,0,0"/><TextBlock x:Name="SourceLabel" Grid.Column="2"/>
+     <TextBlock x:Name="MemoryLabel" Grid.Column="3" HorizontalAlignment="Right"/>
+    </Grid>
+    <ScrollViewer Grid.Row="1" x:Name="Scroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="288" Margin="8,0,8,6" Padding="0,0,0,0">
+     <ItemsControl x:Name="Rows">
+      <ItemsControl.ItemTemplate><DataTemplate>
+       <Button Height="36" HorizontalContentAlignment="Stretch" IsEnabled="{Binding CanOpen}" ToolTip="{Binding Hint}" AutomationProperties.Name="{Binding Hint}" Margin="0,0,0,0">
+        <Button.Template><ControlTemplate TargetType="Button"><Border x:Name="hover" Background="White" CornerRadius="5">
+         <Border BorderBrush="#ECEDEF" BorderThickness="0,0,0,1" Margin="10,0,10,0"><ContentPresenter VerticalAlignment="Center"/></Border>
+        </Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hover" Property="Background" Value="#F0F5FA"/><Setter Property="Cursor" Value="Hand"/></Trigger>
+         <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="hover" Property="Background" Value="#E7F1FC"/></Trigger>
+        </ControlTemplate.Triggers></ControlTemplate></Button.Template>
+        <Grid><Grid.ColumnDefinitions><ColumnDefinition SharedSizeGroup="Address" Width="Auto" MinWidth="132" MaxWidth="210"/><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/><ColumnDefinition Width="25"/></Grid.ColumnDefinitions>
+         <Border HorizontalAlignment="Left" Background="#F1F2F4" CornerRadius="5" Padding="7,3" MaxWidth="210"><TextBlock Text="{Binding Address}" FontSize="12" FontFamily="Consolas"/></Border>
+         <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontWeight="SemiBold" Margin="10,0,12,0"/>
+         <TextBlock Grid.Column="2" Text="{Binding SourceLabel}" Foreground="#676B73" FontSize="12" Margin="0,0,4,0"/>
+         <TextBlock Grid.Column="3" Text="{Binding MemoryLabel}" HorizontalAlignment="Right" Typography.NumeralAlignment="Tabular"/>
+         <Path Grid.Column="4" HorizontalAlignment="Right" VerticalAlignment="Center" Stroke="#0066CC" StrokeThickness="1.3" Data="M 6,2 L 12,2 12,8 M 12,2 L 5,9 M 5,3 L 2,3 2,12 11,12 11,9">
+          <Path.Style><Style TargetType="Path"><Style.Triggers><DataTrigger Binding="{Binding CanOpen}" Value="False"><Setter Property="Visibility" Value="Hidden"/></DataTrigger></Style.Triggers></Style></Path.Style>
+         </Path>
+        </Grid>
+       </Button>
+      </DataTemplate></ItemsControl.ItemTemplate>
+     </ItemsControl>
+    </ScrollViewer>
+   </Grid>
+   <TextBlock x:Name="Status" Margin="20,22" HorizontalAlignment="Center" TextWrapping="Wrap" Foreground="#646870"/>
+   <Border BorderBrush="#DFE1E4" BorderThickness="0,1,0,0">
+    <DockPanel Margin="18,10"><Button x:Name="Quit" DockPanel.Dock="Right" Style="{StaticResource action}" FontSize="12"/>
+     <Button x:Name="CLI" Style="{StaticResource action}" HorizontalAlignment="Left" FontSize="12">
+      <StackPanel Orientation="Horizontal"><Path Stroke="#353941" StrokeThickness="1.2" Data="M 1,1 H 15 V 12 H 1 Z M 4,4 L 6.5,6.5 4,9 M 8,9 H 12" VerticalAlignment="Center" Margin="0,0,7,0"/><TextBlock x:Name="CLIText"/></StackPanel>
+     </Button>
+    </DockPanel>
+   </Border>
+  </StackPanel>
+ </Border>
+</Window>

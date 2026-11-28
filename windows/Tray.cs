@@ -20,6 +20,17 @@ internal sealed class ServiceRow
     public string URL { get; set; }
     public long Memory { get; set; }
     public bool NewPort { get; set; }
+    public string SourceLabel { get; set; }
+    public string DisplayName { get { return !String.IsNullOrEmpty(Title) ? Title : !String.IsNullOrEmpty(Service) ? Service : Name; } }
+    public string Hint { get { return Address + " · " + DisplayName + " · " + SourceLabel; } }
+    public string MemoryLabel { get { return Memory >= 1073741824 ? (Memory / 1073741824.0).ToString("0.#") + " GB" : (Memory / 1048576.0).ToString("0.#") + " MB"; } }
+    public bool CanOpen { get {
+        Uri uri;
+        return Uri.TryCreate(URL, UriKind.Absolute, out uri) && (uri.Scheme == "http" || uri.Scheme == "https");
+    } }
+    public bool SameDisplay(ServiceRow r) {
+        return Address == r.Address && DisplayName == r.DisplayName && SourceLabel == r.SourceLabel && MemoryLabel == r.MemoryLabel && URL == r.URL;
+    }
 }
 
 internal sealed class Snapshot
@@ -32,7 +43,7 @@ internal sealed class Tray : ApplicationContext
 {
     private readonly string cli = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ghosts.exe");
     private readonly string preference = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ghosts", "language.txt");
-    private readonly ContextMenuStrip menu = new ContextMenuStrip();
+    private readonly DesktopPanel desktop;
     private readonly Control dispatch = new Control();
     private readonly NotifyIcon notification = new NotifyIcon();
     private readonly Icon icon = MakeIcon();
@@ -68,7 +79,7 @@ internal sealed class Tray : ApplicationContext
 
     private string T(string en, string zh) { return chinese ? zh : en; }
 
-    private Tray()
+    internal Tray()
     {
         chinese = CultureInfo.CurrentUICulture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
         try { if (File.Exists(preference)) chinese = File.ReadAllText(preference).Trim() == "zh-TW"; }
@@ -77,16 +88,15 @@ internal sealed class Tray : ApplicationContext
         dispatch.CreateControl();
         notification.Icon = icon;
         notification.Text = "Ghosts";
-        notification.ContextMenuStrip = menu;
-        menu.Items.Add("Ghosts");
-        menu.Opening += delegate { BuildMenu(); };
-        notification.MouseClick += delegate(object sender, MouseEventArgs e) {
-            if (e.Button == MouseButtons.Left) menu.Show(Cursor.Position);
-        };
+        desktop = new DesktopPanel(T, SetLanguage, Open, OpenTerminal, ExitThread);
+        notification.MouseClick += delegate { desktop.ShowPanel(Screen.FromPoint(Cursor.Position)); };
         reconnect.Tick += delegate { reconnect.Stop(); StartWorker(); };
         notification.Visible = true;
         StartWorker();
+        ShowPanel();
     }
+
+    public void ShowPanel() { desktop.ShowPanel(Screen.FromPoint(Cursor.Position)); }
 
     private void StartWorker()
     {
@@ -126,22 +136,18 @@ internal sealed class Tray : ApplicationContext
     private void Apply(Snapshot next)
     {
         snapshot = next;
+        desktop.Update(next);
         if (next.Rows == null || !String.IsNullOrEmpty(next.Error)) {
             notification.Text = T("Ghosts · Scanner unavailable", "Ghosts · 掃描器無法使用");
             return;
         }
         notification.Text = "Ghosts · " + next.Rows.Length + T(" development ports", " 個開發連接埠");
-        var alerts = Array.FindAll(next.Rows, r => r.NewPort);
-        if (alerts.Length > 0) {
-            ServiceRow first = alerts[0];
-            string more = alerts.Length > 1 ? " (+" + (alerts.Length - 1) + ")" : "";
-            notification.ShowBalloonTip(5000, T("Ghost spotted!", "撞著鬼！"), first.Name + " · " + first.Address + more, ToolTipIcon.Info);
-        }
     }
 
     private void SetLanguage(bool useChinese)
     {
         chinese = useChinese;
+        desktop.RefreshLanguage();
         try {
             Directory.CreateDirectory(Path.GetDirectoryName(preference));
             File.WriteAllText(preference, chinese ? "zh-TW" : "en");
@@ -152,7 +158,7 @@ internal sealed class Tray : ApplicationContext
 
     private void ShowError(Exception err)
     {
-        notification.ShowBalloonTip(5000, "Ghosts", err.Message, ToolTipIcon.Warning);
+        desktop.Error(err.Message);
     }
 
     private void Open(string target)
@@ -161,35 +167,25 @@ internal sealed class Tray : ApplicationContext
         catch (System.ComponentModel.Win32Exception err) { ShowError(err); }
     }
 
-    private void BuildMenu()
+    private void OpenTerminal()
     {
-        while (menu.Items.Count > 0) menu.Items[0].Dispose();
-        if (snapshot == null || !String.IsNullOrEmpty(snapshot.Error) || snapshot.Rows.Length == 0) {
-            string status = snapshot == null ? T("Scanning…", "掃描中…") :
-                !String.IsNullOrEmpty(snapshot.Error) ? snapshot.Error : T("No development ports", "目前沒有開發連接埠");
-            menu.Items.Add(status).Enabled = false;
-        } else {
-            foreach (ServiceRow row in snapshot.Rows) {
-                string label = String.IsNullOrEmpty(row.Title) ? row.Name : row.Title;
-                string details = row.Address + " · " + (row.Memory / 1048576.0).ToString("0.#") + " MB";
-                if (!String.IsNullOrEmpty(row.Source)) details += " · " + row.Source;
-                if (!String.IsNullOrEmpty(row.Service)) details += " · " + row.Service;
-                var item = new ToolStripMenuItem((label + Environment.NewLine + details).Replace("&", "&&"));
-                Uri url;
-                if (Uri.TryCreate(row.URL, UriKind.Absolute, out url) && (url.Scheme == "https" || url.Scheme == "http")) {
-                    string target = url.AbsoluteUri;
-                    item.Click += delegate { Open(target); };
-                } else item.Enabled = false;
-                menu.Items.Add(item);
-            }
+        string terminal = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Microsoft\WindowsApps\wt.exe");
+        bool hasTerminal = File.Exists(terminal);
+        var info = new ProcessStartInfo {
+            FileName = hasTerminal ? terminal : cli,
+            Arguments = hasTerminal ? "-w new --size 148,34 new-tab --title Ghosts \"" + cli + "\"" : "",
+            WorkingDirectory = Path.GetDirectoryName(cli), UseShellExecute = false
+        };
+        // The tray may be launched by a headless tool. Start its interactive console with
+        // desktop user preferences, independent of the launcher's output-capture settings.
+        foreach (string name in new [] { "NO_COLOR", "TERM", "COLORTERM", "CLICOLOR" }) {
+            string value = Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.User)
+                ?? Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Machine);
+            if (String.IsNullOrEmpty(value)) info.EnvironmentVariables.Remove(name);
+            else info.EnvironmentVariables[name] = value;
         }
-        menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(T("Open Ghosts CLI", "開啟 Ghosts CLI"), null, delegate { Open(cli); });
-        var language = new ToolStripMenuItem(T("Language", "語言"));
-        ((ToolStripMenuItem)language.DropDownItems.Add("English", null, delegate { SetLanguage(false); })).Checked = !chinese;
-        ((ToolStripMenuItem)language.DropDownItems.Add("繁體中文", null, delegate { SetLanguage(true); })).Checked = chinese;
-        menu.Items.Add(language);
-        menu.Items.Add(T("Quit", "結束"), null, delegate { ExitThread(); });
+        try { Process.Start(info); }
+        catch (System.ComponentModel.Win32Exception err) { ShowError(err); }
     }
 
     protected override void ExitThreadCore()
@@ -199,10 +195,11 @@ internal sealed class Tray : ApplicationContext
         if (worker != null) { worker.StandardInput.Close(); worker.Dispose(); }
         notification.Visible = false;
         notification.Dispose();
-        menu.Dispose();
+        desktop.Dispose();
         icon.Dispose();
         dispatch.Dispose();
         base.ExitThreadCore();
+        System.Windows.Application.Current.Shutdown();
     }
 
     [STAThread]
@@ -210,10 +207,16 @@ internal sealed class Tray : ApplicationContext
     {
         bool first;
         using (var mutex = new Mutex(true, @"Local\Ghosts.Tray", out first)) {
-            if (!first) return;
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Tray());
+            using (var show = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\Ghosts.ShowPanel")) {
+                if (!first) { show.Set(); return; }
+                Application.EnableVisualStyles();
+                var app = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
+                var tray = new Tray();
+                var registration = ThreadPool.RegisterWaitForSingleObject(show, delegate {
+                    app.Dispatcher.BeginInvoke((Action)tray.ShowPanel);
+                }, null, Timeout.Infinite, false);
+                try { app.Run(); } finally { registration.Unregister(null); }
+            }
         }
     }
 }

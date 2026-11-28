@@ -77,6 +77,8 @@ func TestWrapCommand(t *testing.T) {
 		{"node /a/node_modules/.bin/vite --port 5173", 33, []string{"node /a/node_modules/.bin/vite", "--port 5173"}},
 		{"python3 -m uvicorn app.main:app", 12, []string{"python3 -m", "uvicorn", "app.main:app"}},
 		{"/usr/local/bin/x", 6, []string{"/usr/", "local/", "bin/x"}},
+		{`D:\開發\應用`, 5, []string{`D:\`, `開發\`, "應用"}},
+		{"中文專案", 4, []string{"中文", "專案"}},
 		{"abcdefghij", 4, []string{"abcd", "efgh", "ij"}},
 		{"", 10, []string{""}},
 	}
