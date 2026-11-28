@@ -3,12 +3,13 @@ param(
     [ValidateSet('amd64', 'arm64')]
     [string]$Arch = $(if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') { 'arm64' } else { 'amd64' }),
     [ValidatePattern('^[a-zA-Z0-9][a-zA-Z0-9._-]*$')]
-    [string]$Version = 'dev'
+    [string]$Version = 'dev',
+    [string]$OutputDirectory = (Join-Path (Split-Path -Parent $PSScriptRoot) 'dist')
 )
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
-$dest = Join-Path $repo "dist\windows_$Arch"
+$dest = Join-Path $OutputDirectory "windows_$Arch"
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework/v4.0.30319/csc.exe'
 $previousArch = $env:GOARCH
 Push-Location $repo
@@ -25,8 +26,9 @@ try {
 
     $docs = 'LICENSE', 'README.md', 'README.zh-TW.md'
     foreach ($doc in $docs) { Copy-Item -LiteralPath $doc -Destination $dest }
-    $files = foreach ($name in (@('ghosts.exe', 'GhostsTray.exe') + $docs)) { Join-Path $dest $name }
-    $zip = Join-Path $repo "dist/ghosts_${Version}_windows_${Arch}.zip"
+    Copy-Item -LiteralPath (Join-Path $repo 'packaging/install.ps1'), (Join-Path $PSScriptRoot 'install.cmd') -Destination $dest
+    $files = foreach ($name in (@('ghosts.exe', 'GhostsTray.exe', 'install.cmd', 'install.ps1') + $docs)) { Join-Path $dest $name }
+    $zip = Join-Path $OutputDirectory "ghosts_${Version}_windows_${Arch}.zip"
     Compress-Archive -LiteralPath $files -DestinationPath $zip -Force
     Write-Output $zip
 } finally {

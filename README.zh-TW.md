@@ -7,7 +7,8 @@
 <p align="center">
   <a href="https://github.com/xamjiang/ghosts/releases/latest"><img src="https://img.shields.io/github/v/release/xamjiang/ghosts?style=flat-square&color=0A84FF&label=release" alt="Release"></a>
   <a href="https://github.com/xamjiang/ghosts/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/xamjiang/ghosts/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
-  <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-1C1C1E?style=flat-square&logo=apple&logoColor=white" alt="macOS · Linux · Windows">
+  <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux-1C1C1E?style=flat-square&logo=apple&logoColor=white" alt="macOS · Linux">
+  <a href="#windows-安裝"><img src="https://img.shields.io/badge/Windows-x64%20%C2%B7%20ARM64-0078D4?style=flat-square" alt="Windows 安裝"></a>
   <img src="https://img.shields.io/github/go-mod/go-version/xamjiang/ghosts?style=flat-square&color=00ADD8&logo=go&logoColor=white" alt="Go">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/xamjiang/ghosts?style=flat-square&color=30D158" alt="MIT"></a>
 </p>
@@ -22,16 +23,26 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 沒用過終端機？<a href="#第一次使用">看一步一步的教學 ↓</a><br>
 <sub>Ubuntu / Debian 會加入 APT repo、有 Homebrew 就用 brew，其他系統直接下載 binary。<a href="#安裝細節">安裝細節 ↓</a></sub></p>
 
+### Windows 安裝
+
+在 Windows 10／11 的 CMD 或 PowerShell 貼上這一行。
+
+```cmd
+powershell -NoProfile -Command "irm https://ghosts.xamjiang.com/install.ps1 | iex"
+```
+
+安裝器會選擇 x64 或 ARM64 套件、核對 SHA-256，並將程式安裝到 `%LOCALAPPDATA%\Programs\Ghosts`，自動加入**目前使用者的 Path**。開新的 CMD 或 PowerShell 後，在任何資料夾輸入 `ghost` 即可啟動。也能使用 `ghosts` 或 `ghost -list`。
+
+離線安裝可解壓縮對應架構的 ZIP 並執行 `install.cmd`。更新前先結束正在執行的 Ghosts，再重跑安裝指令。
+
 ### Windows 終端機與系統匣
 
 ![Windows 本機服務面板，顯示四個範例服務](docs/images/windows-services.png)
 
 [新連接埠提示](docs/images/windows-new-port.png) · [Windows 終端機畫面](docs/images/windows-cli.png)
 
-Windows 10／11 請解壓縮符合處理器架構的 Windows ZIP。Intel／AMD x64 選 `amd64`，Windows on Arm 選 `arm64`。兩個執行檔請放在同一個資料夾。
-
 - 雙擊 **GhostsTray.exe**，點通知區域的幽靈圖示，即可查看監聽位址、網頁標題、啟動來源與程序樹記憶體。點網頁服務可在預設瀏覽器開啟。白色面板沿用 macOS 的服務列表。新開發連接埠出現時，工作列旁會彈出 Ghosts 視窗，停留五秒，點一下即可查看服務。面板與提示都支援繁體中文和英文。
-- 在 Windows 終端機執行 **ghosts.exe** 開啟互動介面，或用 `.\ghosts.exe -list` 列出一次。Docker Desktop 透過本機 Engine 具名管道連線。
+- 在新開的 CMD 或 PowerShell 輸入 `ghost` 開啟互動介面，或用 `ghost -list` 列出目前的服務。Docker Desktop 透過本機 Engine 具名管道連線。
 - 一般停止會要求該程序的視窗關閉。無視窗的主控台服務會另外詢問是否強制停止。Windows 顯示 CPU 與工作集記憶體，耗電與喚醒次數依平台而異。
 
 從此分支自行建置時，請安裝 go.mod 指定的 Go 版本與 .NET Framework 4.8，然後在 PowerShell 執行 `.\windows\build.ps1`。ZIP 位於 `dist\`。

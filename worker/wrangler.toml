@@ -11,7 +11,7 @@ routes = [{ pattern = "ghosts.xamjiang.com", custom_domain = true }]
 # bundled into the Worker, so they are served from the edge with no origin
 # fetch.
 rules = [
-  { type = "Text", globs = ["**/*.sh", "**/*.html", "**/*.svg", "**/*.asc"], fallthrough = true },
+  { type = "Text", globs = ["**/*.sh", "**/*.ps1", "**/*.html", "**/*.svg", "**/*.asc"], fallthrough = true },
   { type = "Data", globs = ["**/*.gpg", "**/*.png"], fallthrough = true },
 ]
 

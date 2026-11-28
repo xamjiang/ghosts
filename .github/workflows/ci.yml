@@ -21,3 +21,5 @@ jobs:
       - run: go build ./cmd/ghosts
       - if: runner.os == 'Windows'
         run: ./windows/build.ps1
+      - if: runner.os == 'Windows'
+        run: ./windows/test-install.ps1
