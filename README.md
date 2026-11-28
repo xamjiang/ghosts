@@ -8,11 +8,12 @@
   <a href="https://github.com/xamjiang/ghosts/releases/latest"><img src="https://img.shields.io/github/v/release/xamjiang/ghosts?style=flat-square&color=0A84FF&label=release" alt="Release"></a>
   <a href="https://github.com/xamjiang/ghosts/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/xamjiang/ghosts/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux-1C1C1E?style=flat-square&logo=apple&logoColor=white" alt="macOS · Linux">
+  <a href="https://github.com/ivan17lai/ghosts/releases/tag/windows-preview-1"><img src="https://img.shields.io/badge/Windows-x64%20%C2%B7%20ARM64-0078D4?style=flat-square" alt="Download the Windows preview"></a>
   <img src="https://img.shields.io/github/go-mod/go-version/xamjiang/ghosts?style=flat-square&color=00ADD8&logo=go&logoColor=white" alt="Go">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/xamjiang/ghosts?style=flat-square&color=30D158" alt="MIT"></a>
 </p>
 
-<h3 align="center">Install in one line</h3>
+<h3 align="center">One-line install for macOS and Linux</h3>
 
 ```sh
 curl -fsSL https://ghosts.xamjiang.com/install | bash
@@ -21,6 +22,62 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 <p align="center">Then run <code>ghosts</code> in your terminal. Works on macOS 13+ and Linux (amd64 / arm64).<br>
 New to the terminal? <a href="#getting-started">Follow the step-by-step guide ↓</a><br>
 <sub>Adds an APT repository on Ubuntu / Debian, uses Homebrew if you have it, and downloads the binary everywhere else. <a href="#installation">Details ↓</a></sub></p>
+
+### Windows installation
+
+Paste this command into CMD or PowerShell to install the Windows preview. After installation, open a new Command Prompt and type `ghost`.
+
+```cmd
+powershell -c "irm https://github.com/ivan17lai/ghosts/raw/main/install.ps1 | iex"
+```
+
+In **Git Bash for Windows**, use this command:
+
+```sh
+curl -fsSL https://github.com/ivan17lai/ghosts/raw/main/install | bash
+```
+
+Download the [Windows preview](https://github.com/ivan17lai/ghosts/releases/tag/windows-preview-1) for your processor. Choose [x64 for Intel or AMD](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_amd64.zip) or [ARM64 for Windows on ARM](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_arm64.zip).
+
+1. Extract the ZIP and double-click `install.cmd`. The installer adds Ghosts to your user `PATH`.
+2. Open a new Command Prompt from the Start menu and type `ghost`. Use `ghost -list` for a one-time list of services.
+3. To try the desktop panel, run `GhostsTray.exe` and click the Ghosts icon in the system tray.
+
+<details>
+<summary>One-line install for the official release (available after the installer and Windows packages are published)</summary>
+
+```cmd
+powershell -NoProfile -Command "irm https://ghosts.xamjiang.com/install.ps1 | iex"
+```
+
+The installer selects the x64 or ARM64 release, verifies its SHA-256 checksum, installs to `%LOCALAPPDATA%\Programs\Ghosts`, and adds that folder to **your user PATH**. Open a new CMD or PowerShell window and run `ghost` from any folder. `ghosts` and `ghost -list` also work.
+
+</details>
+
+### Windows terminal and system tray
+
+![Windows service panel showing four sample listeners](docs/images/windows-services.png)
+
+[New-port popup](docs/images/windows-new-port.png) · [Windows terminal view](docs/images/windows-cli.png)
+
+- Double-click **GhostsTray.exe** and click the ghost in the notification area to see listening addresses, page titles, launch sources, and process-tree memory. Select a web service to open it. The flat white panel follows the macOS service list. A new development port opens a five-second Ghosts popup beside the taskbar. Click it to view services. Both the panel and popup support English and Traditional Chinese.
+- Run `ghost` in a new CMD or PowerShell window for the interactive monitor. Use `ghost -list` for a one-time list. Docker Desktop integration uses the local Engine named pipe.
+- A normal stop asks the process’s windows to close. For a console server without a window, Ghosts offers a separate force-stop confirmation. CPU and working-set memory are available on Windows. Power and wakeup counters are platform-specific.
+
+To build the ZIP from this branch, run `.\windows\build.ps1` in PowerShell with the Go version in go.mod and .NET Framework 4.8 installed. Look under `dist\` for the package.
+
+### macOS menu bar
+
+With Go (see go.mod) and the Xcode Command Line Tools installed, run from the repository root:
+
+```sh
+./macos/build.sh
+open dist/Ghosts.app
+```
+
+Click the menu bar capsule to see the full listening address, page title or process name, launch source (when identifiable), and process-tree memory. Select a web service to open it in your default browser. **Open Ghosts CLI** launches the bundled terminal interface. The CLI and `ghosts -list` also show page titles. You can drag the built app into Applications.
+
+The first scan establishes a baseline. When a new development port appears, the capsule expands for five seconds. Choose **English** or **繁體中文** in the panel to set the interface and alert language. The interactive CLI shows a brief notice in the terminal.
 
 <br>
 
@@ -60,7 +117,7 @@ AI coding tools like Claude Code and Codex start dev servers and Docker services
 
 Press <kbd>x</kbd> to stop or <kbd>X</kbd> to force stop, then <kbd>⏎</kbd> to confirm.
 
-- Sends SIGTERM first, and only offers SIGKILL if the process is still alive after 3 seconds
+- On macOS and Linux, sends SIGTERM first, and only offers SIGKILL if the process is still alive after 3 seconds
 - Checks the process start time before signalling, so a reused PID never takes down the wrong process
 - Stops containers with `docker stop`, never by killing Docker Desktop
 - Hides apps and system services by default, and warns you before stopping one

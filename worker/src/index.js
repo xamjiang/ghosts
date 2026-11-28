@@ -7,6 +7,7 @@
 //   /install.sh   the install script, always (for reading it first)
 //   /apt/...      the APT repository, served from the latest GitHub release
 import script from "../../packaging/install.sh";
+import windowsInstaller from "../../packaging/install.ps1";
 import keyAsc from "../../packaging/apt-key.asc";
 import keyGpg from "../../packaging/apt-key.gpg";
 import page from "./page.html";
@@ -42,6 +43,9 @@ export default {
 		}
 		if (path.startsWith("/images/") && Object.hasOwn(images, path.slice("/images/".length))) {
 			return text(images[path.slice("/images/".length)], "image/svg+xml; charset=utf-8", 3600);
+		}
+		if (path === "/install.ps1") {
+			return text(windowsInstaller, "text/plain; charset=utf-8", 300);
 		}
 		if (path === "/install" || path === "/install.sh") {
 			return text(script, "text/plain; charset=utf-8", 300);

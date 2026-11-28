@@ -76,8 +76,7 @@ type Client struct {
 func New() *Client {
 	sock := findSocket()
 	dial := func(ctx context.Context, _, _ string) (net.Conn, error) {
-		var d net.Dialer
-		return d.DialContext(ctx, "unix", sock)
+		return dialSocket(ctx, sock)
 	}
 	return &Client{
 		prev:   map[string]cpuSample{},
@@ -87,34 +86,10 @@ func New() *Client {
 	}
 }
 
-func findSocket() string {
-	if h := os.Getenv("DOCKER_HOST"); strings.HasPrefix(h, "unix://") {
-		return strings.TrimPrefix(h, "unix://")
-	}
-	if s := contextSocket(); s != "" {
-		return s
-	}
-	home, _ := os.UserHomeDir()
-	candidates := []string{
-		filepath.Join(home, ".docker/run/docker.sock"),
-		filepath.Join(home, ".docker/desktop/docker.sock"), // Docker Desktop for Linux
-		filepath.Join(home, ".orbstack/run/docker.sock"),
-		filepath.Join(home, ".colima/default/docker.sock"),
-		filepath.Join(home, ".rd/docker.sock"),
-		"/var/run/docker.sock",
-	}
-	for _, c := range candidates {
-		if fi, err := os.Stat(c); err == nil && fi.Mode()&os.ModeSocket != 0 {
-			return c
-		}
-	}
-	return "/var/run/docker.sock"
-}
-
-// contextSocket returns the socket of the docker CLI's current context
+// contextHost returns the endpoint of the docker CLI's current context
 // ("docker context use"), which matters when several engines are installed,
 // e.g. Docker Engine and Docker Desktop side by side on Linux.
-func contextSocket() string {
+func contextHost() string {
 	dir := os.Getenv("DOCKER_CONFIG")
 	if dir == "" {
 		home, _ := os.UserHomeDir()
@@ -149,11 +124,7 @@ func contextSocket() string {
 	if json.Unmarshal(b, &meta) != nil {
 		return ""
 	}
-	h, ok := strings.CutPrefix(meta.Endpoints.Docker.Host, "unix://")
-	if !ok {
-		return ""
-	}
-	return h
+	return meta.Endpoints.Docker.Host
 }
 
 func (c *Client) do(ctx context.Context, method, path string) (*http.Response, error) {
@@ -354,14 +325,16 @@ func (c *Client) fillOne(ctx context.Context, ct *Container) {
 		return
 	}
 	var st struct {
-		CPU struct {
+		NumProcs uint32 `json:"num_procs"`
+		CPU      struct {
 			Usage struct {
 				Total uint64 `json:"total_usage"`
 			} `json:"cpu_usage"`
 		} `json:"cpu_stats"`
 		Mem struct {
-			Usage uint64            `json:"usage"`
-			Stats map[string]uint64 `json:"stats"`
+			PrivateWorkingSet uint64            `json:"privateworkingset"`
+			Usage             uint64            `json:"usage"`
+			Stats             map[string]uint64 `json:"stats"`
 		} `json:"memory_stats"`
 	}
 	if json.NewDecoder(resp.Body).Decode(&st) != nil {
@@ -375,6 +348,11 @@ func (c *Client) fillOne(ctx context.Context, ct *Container) {
 	}
 	if cache < mem {
 		mem -= cache
+	}
+	// Windows containers report CPU in 100 ns ticks and private working-set memory.
+	if st.NumProcs > 0 {
+		mem = st.Mem.PrivateWorkingSet
+		st.CPU.Usage.Total *= 100
 	}
 	ct.Mem = mem
 

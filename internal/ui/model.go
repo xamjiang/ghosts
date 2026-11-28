@@ -253,8 +253,18 @@ func (m *Model) update(msg tea.Msg) tea.Cmd {
 		// scanning still false here; either way the scan is now finished.
 		m.scanning = false
 		m.portsErr = msg.err
+		var notice tea.Cmd
 		if msg.err == nil {
 			m.markNew(msg.snap.Listeners, m.portsReady)
+			var opened []string
+			for _, l := range msg.snap.Listeners {
+				if l.NewPort {
+					opened = append(opened, fmt.Sprintf("%s :%d", l.Name, l.Port))
+				}
+			}
+			if len(opened) > 0 && (m.toast == nil || m.toast.kind == toastInfo) {
+				notice = m.showToast("👻 New ghost · "+strings.Join(opened, ", "), toastInfo)
+			}
 			m.listeners = msg.snap.Listeners
 			m.procs, m.vm = msg.snap.Procs, msg.snap.VM
 			m.hasEnergy, m.hasWakeups = msg.snap.HasEnergy, msg.snap.HasWakeups
@@ -267,7 +277,7 @@ func (m *Model) update(msg tea.Msg) tea.Cmd {
 			interval *= 3 // nobody is looking; save some cycles
 		}
 		gen := m.scanGen
-		return tea.Tick(interval, func(time.Time) tea.Msg { return scanTickMsg{gen} })
+		return tea.Batch(notice, tea.Tick(interval, func(time.Time) tea.Msg { return scanTickMsg{gen} }))
 
 	case scanTickMsg:
 		if msg.gen != m.scanGen {
@@ -645,7 +655,11 @@ func urlFor(r *row) string {
 	case r == nil:
 		return ""
 	case r.kind == rowListener:
-		return fmt.Sprintf("http://localhost:%d", r.l.Port)
+		scheme := r.l.WebScheme
+		if scheme == "" {
+			scheme = "http"
+		}
+		return scheme + "://" + r.l.Address()
 	case r.kind == rowContainer && len(r.ctr.Ports) > 0:
 		return fmt.Sprintf("http://localhost:%d", r.ctr.Ports[0].Public)
 	}
@@ -712,6 +726,10 @@ func confirmStop(l ports.Listener, force bool) *confirm {
 func stopCmd(l ports.Listener, force bool) tea.Cmd {
 	return func() tea.Msg {
 		msg := actionMsg{keys: []string{l.Key()}}
+		if l.SharedPortProxy() {
+			msg.err = fmt.Errorf("%s forwards ports for other services. Stop the container or service that owns this port.", l.Name)
+			return msg
+		}
 		var gone bool
 		var err error
 		if force {
@@ -727,11 +745,11 @@ func stopCmd(l ports.Listener, force bool) tea.Cmd {
 		case gone:
 			msg.ok = fmt.Sprintf("Stopped %s · port %d is free", l.Name, l.Port)
 		case force:
-			msg.err = fmt.Errorf("%s is still running after SIGKILL", l.Name)
+			msg.err = fmt.Errorf("%s is still running after the force stop request", l.Name)
 		default:
 			retry := confirmStop(l, true)
 			retry.title = fmt.Sprintf("%s is still running. Force stop?", l.Name)
-			retry.warn = "It ignored the request to stop for 3 seconds."
+			retry.warn = "The process did not exit after the stop request."
 			msg.retry = retry
 		}
 		return msg

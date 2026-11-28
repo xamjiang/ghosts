@@ -7,11 +7,9 @@ on:
 
 jobs:
   test:
-    # Each OS has its own process backend: cgo + libproc on macOS, /proc and
-    # netlink on Linux. Both have to be built and tested natively.
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -21,3 +19,7 @@ jobs:
       - run: go vet ./...
       - run: go test ./...
       - run: go build ./cmd/ghosts
+      - if: runner.os == 'Windows'
+        run: ./windows/build.ps1
+      - if: runner.os == 'Windows'
+        run: ./windows/test-install.ps1

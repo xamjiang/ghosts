@@ -1,6 +1,7 @@
 package ports
 
 import (
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -133,6 +134,10 @@ func (s *sampler) measure(pids map[int]bool, t procTable) map[int]Usage {
 var vmComms = []string{"com.docker.", "com.apple.Virtu", "OrbStack", "limactl", "qemu-system"}
 
 func (t procTable) vmPIDs() []int {
+	// WSL 2 memory can be shared with other distributions. Use container totals on Windows.
+	if runtime.GOOS == "windows" {
+		return nil
+	}
 	var out []int
 	for pid, c := range t.comm {
 		for _, p := range vmComms {

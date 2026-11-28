@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -50,7 +51,11 @@ func (m *Model) visibleListeners() (out []row, hidden int) {
 	byPort := containerByPort(m.containers)
 	for i := range m.listeners {
 		l := &m.listeners[i]
-		r := row{kind: rowListener, key: l.Key(), l: l, ctr: byPort[l.Port]}
+		r := row{kind: rowListener, key: l.Key(), l: l}
+		// Distinct interfaces can reuse a port. On Windows, only attach container actions to known port forwarders.
+		if runtime.GOOS != "windows" || l.SharedPortProxy() {
+			r.ctr = byPort[l.Port]
+		}
 		if r.ctr == nil && l.Kind != ports.KindDev && !m.showAll {
 			hidden++
 			continue
@@ -152,7 +157,7 @@ func displayName(r row) string {
 
 func matchListener(r row, q string) bool {
 	l := r.l
-	fields := []string{strconv.Itoa(l.Port), l.Name, l.Runtime, l.Comm, tilde(l.Project), l.CommandLine(), strconv.Itoa(l.PID)}
+	fields := []string{strconv.Itoa(l.Port), l.Name, l.Title, l.Runtime, l.Comm, tilde(l.Project), l.CommandLine(), strconv.Itoa(l.PID)}
 	if r.ctr != nil {
 		fields = append(fields, r.ctr.Name, r.ctr.Image, r.ctr.Project, "docker")
 	}

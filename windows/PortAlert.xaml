@@ -1,0 +1,15 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="Ghosts · New port" Width="340" Height="72" WindowStyle="None" ResizeMode="NoResize" Background="White" ShowInTaskbar="False"
+ ShowActivated="False" Topmost="True" WindowStartupLocation="Manual" FontFamily="Segoe UI, Microsoft JhengHei UI" UseLayoutRounding="True">
+ <Border CornerRadius="12" BorderBrush="#D6D7DA" BorderThickness="1" Background="White" Padding="12,8" Cursor="Hand">
+  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <Border Height="36" Width="36" CornerRadius="18" Background="#FFF0D9"><TextBlock Text="👻" FontFamily="Segoe UI Emoji" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+   <StackPanel Grid.Column="1" Margin="11,0,8,0" VerticalAlignment="Center">
+    <TextBlock x:Name="Greeting" FontWeight="SemiBold" FontSize="15" Foreground="#242528"/>
+    <TextBlock x:Name="Detail" FontSize="12" Foreground="#62666E" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+   </StackPanel>
+   <Border Grid.Column="2" VerticalAlignment="Center" MinWidth="25" CornerRadius="11" Background="#F1A24C" Padding="7,2"><TextBlock x:Name="Count" HorizontalAlignment="Center" Foreground="#2A2219" FontSize="12" FontWeight="SemiBold"/></Border>
+  <Button x:Name="CloseAlert" Grid.Column="3" Margin="7,0,0,0" VerticalAlignment="Top" Width="23" Height="23" Cursor="Hand"><Button.Template><ControlTemplate TargetType="Button"><Border x:Name="hit" CornerRadius="5" Background="White"><Path Stroke="#666970" StrokeThickness="1.3" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 1,1 L 9,9 M 9,1 L 1,9"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hit" Property="Background" Value="#F0F1F3"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Button.Template></Button>
+  </Grid>
+ </Border>
+</Window>

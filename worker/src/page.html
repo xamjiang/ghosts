@@ -367,8 +367,8 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
     <span class="en">Then run <code>ghosts</code>. macOS 13+ and Linux (amd64, arm64).</span>
     <span class="zh" lang="zh-Hant">裝好後輸入 <code>ghosts</code>。支援 macOS 13 以上和 Linux（amd64、arm64）。</span>
     <br>
-    <span class="en">New to the terminal? <a href="#start">Follow the step-by-step guide ↓</a></span>
-    <span class="zh" lang="zh-Hant">沒用過終端機？<a href="#start">看一步一步的教學 ↓</a></span>
+    <span class="en"><a href="#windows-install">Windows installation</a> · New to the terminal? <a href="#start">Follow the step-by-step guide ↓</a></span>
+    <span class="zh" lang="zh-Hant"><a href="#windows-install">Windows 安裝</a> · 沒用過終端機？<a href="#start">看一步一步的教學 ↓</a></span>
   </p>
 </div>
 
@@ -711,6 +711,12 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
       </button>
     </div>
 
+    <h3 class="sm" id="windows-install">Windows · CMD / PowerShell</h3>
+    <div class="cmd">
+      <code id="windows-command">powershell -NoProfile -Command "irm https://ghosts.xamjiang.com/install.ps1 | iex"</code>
+      <button type="button" class="copy" data-copy="windows-command"><span class="idle"><span class="en">Copy</span><span class="zh" lang="zh-Hant">複製</span></span><span class="done"><span class="en">Copied</span><span class="zh" lang="zh-Hant">已複製</span></span></button>
+    </div>
+    <p><span class="en">The <a href="/install.ps1">Windows installer</a> adds Ghosts to your user PATH. Open a new terminal and type <code>ghost</code>.</span><span class="zh" lang="zh-Hant"><a href="/install.ps1">Windows 安裝器</a>會自動加入使用者 Path。開新的終端機，輸入 <code>ghost</code> 即可啟動。</span></p>
     <h3 class="sm"><span class="en">What the script does</span><span class="zh" lang="zh-Hant">Script 會做什麼</span></h3>
     <table>
       <tr>

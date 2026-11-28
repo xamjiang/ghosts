@@ -458,3 +458,8 @@ func parseProcIP(h string) net.IP {
 	}
 	return ip
 }
+
+func executablePath(pid int) string {
+	path, _ := os.Readlink("/proc/" + strconv.Itoa(pid) + "/exe")
+	return path
+}

@@ -473,6 +473,9 @@ func listenerName(r row) string {
 	if r.ctr != nil {
 		return r.ctr.Name + " docker"
 	}
+	if r.l.Title != "" {
+		return r.l.Title + " " + r.l.Name
+	}
 	if r.l.Runtime != "" {
 		return r.l.Name + " " + r.l.Runtime
 	}
@@ -576,6 +579,9 @@ func (m Model) listenerCells(r row, c columns) []seg {
 	name, rt, rtColor := l.Name, l.Runtime, m.th.sub
 	if r.ctr != nil {
 		name, rt, rtColor = r.ctr.Name, "docker", m.th.accent
+	}
+	if l.Title != "" && r.ctr == nil {
+		name, rt = l.Title, l.Name
 	}
 	nameW := col(pcName).w
 	if ansi.StringWidth(name) >= nameW || rt == "" {
@@ -817,6 +823,12 @@ func (m Model) viewDetail(w, h int, bordered bool) []string {
 	case r.kind == rowListener:
 		l := r.l
 		title = l.Name
+		if l.Source != "" {
+			rows = append(rows, kv{"Source", l.Source, nil})
+		}
+		if l.Title != "" {
+			rows = append(rows, kv{"Page title", l.Title, nil})
+		}
 		subtitle = fmt.Sprintf("PID %d", l.PID)
 		if l.Runtime != "" {
 			subtitle = l.Runtime + " · " + subtitle
@@ -925,7 +937,7 @@ func (m Model) viewHelp(h int) []string {
 		}},
 		{"Act", []item{
 			{"x", "Stop process, container or compose project"},
-			{"X", "Force stop (SIGKILL / docker kill)"},
+			{"X", "Force stop process or container"},
 			{"o", "Open in browser"},
 		}},
 		{"View", []item{

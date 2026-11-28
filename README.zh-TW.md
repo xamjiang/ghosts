@@ -8,11 +8,12 @@
   <a href="https://github.com/xamjiang/ghosts/releases/latest"><img src="https://img.shields.io/github/v/release/xamjiang/ghosts?style=flat-square&color=0A84FF&label=release" alt="Release"></a>
   <a href="https://github.com/xamjiang/ghosts/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/xamjiang/ghosts/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux-1C1C1E?style=flat-square&logo=apple&logoColor=white" alt="macOS · Linux">
+  <a href="https://github.com/ivan17lai/ghosts/releases/tag/windows-preview-1"><img src="https://img.shields.io/badge/Windows-x64%20%C2%B7%20ARM64-0078D4?style=flat-square" alt="下載 Windows 測試版"></a>
   <img src="https://img.shields.io/github/go-mod/go-version/xamjiang/ghosts?style=flat-square&color=00ADD8&logo=go&logoColor=white" alt="Go">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/xamjiang/ghosts?style=flat-square&color=30D158" alt="MIT"></a>
 </p>
 
-<h3 align="center">一行安裝</h3>
+<h3 align="center">macOS／Linux 一行安裝</h3>
 
 ```sh
 curl -fsSL https://ghosts.xamjiang.com/install | bash
@@ -21,6 +22,62 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 <p align="center">裝好後在終端機輸入 <code>ghosts</code> 就能開始。支援 macOS 13 以上和 Linux（amd64 / arm64）。<br>
 沒用過終端機？<a href="#第一次使用">看一步一步的教學 ↓</a><br>
 <sub>Ubuntu / Debian 會加入 APT repo、有 Homebrew 就用 brew，其他系統直接下載 binary。<a href="#安裝細節">安裝細節 ↓</a></sub></p>
+
+### Windows 安裝
+
+將這一行貼到 CMD 或 PowerShell，即可安裝 Windows 測試版。安裝完成後，開一個新的 CMD 並輸入 `ghost`。
+
+```cmd
+powershell -c "irm https://github.com/ivan17lai/ghosts/raw/main/install.ps1 | iex"
+```
+
+如果你用 Windows 的 **Git Bash**，貼上這一行：
+
+```sh
+curl -fsSL https://github.com/ivan17lai/ghosts/raw/main/install | bash
+```
+
+[Windows 測試版](https://github.com/ivan17lai/ghosts/releases/tag/windows-preview-1)提供兩個 ZIP，請依處理器選擇 [x64（Intel／AMD）](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_amd64.zip) 或 [ARM64（例如 Snapdragon）](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_arm64.zip)。
+
+1. 完整解壓縮 ZIP，再雙擊 `install.cmd`。安裝器會自動將 Ghosts 加入目前使用者的 `PATH`。
+2. 從開始功能表開一個新的 CMD，輸入 `ghost`。輸入 `ghost -list` 可以列出目前的服務。
+3. 想試圖形介面，請在 CMD 輸入 `GhostsTray.exe`，再點系統匣的 Ghosts 圖示。
+
+<details>
+<summary>正式版一行安裝（待官網部署並發佈 Windows 套件後開放）</summary>
+
+```cmd
+powershell -NoProfile -Command "irm https://ghosts.xamjiang.com/install.ps1 | iex"
+```
+
+安裝器會選擇 x64 或 ARM64 套件、核對 SHA-256，並將程式安裝到 `%LOCALAPPDATA%\Programs\Ghosts`，自動加入**目前使用者的 Path**。開新的 CMD 或 PowerShell 後，在任何資料夾輸入 `ghost` 即可啟動。也能使用 `ghosts` 或 `ghost -list`。
+
+</details>
+
+### Windows 終端機與系統匣
+
+![Windows 本機服務面板，顯示四個範例服務](docs/images/windows-services.png)
+
+[新連接埠提示](docs/images/windows-new-port.png) · [Windows 終端機畫面](docs/images/windows-cli.png)
+
+- 雙擊 **GhostsTray.exe**，點通知區域的幽靈圖示，即可查看監聽位址、網頁標題、啟動來源與程序樹記憶體。點網頁服務可在預設瀏覽器開啟。白色面板沿用 macOS 的服務列表。新開發連接埠出現時，工作列旁會彈出 Ghosts 視窗，停留五秒，點一下即可查看服務。面板與提示都支援繁體中文和英文。
+- 在新開的 CMD 或 PowerShell 輸入 `ghost` 開啟互動介面，或用 `ghost -list` 列出目前的服務。Docker Desktop 透過本機 Engine 具名管道連線。
+- 一般停止會要求該程序的視窗關閉。無視窗的主控台服務會另外詢問是否強制停止。Windows 顯示 CPU 與工作集記憶體，耗電與喚醒次數依平台而異。
+
+從此分支自行建置時，請安裝 go.mod 指定的 Go 版本與 .NET Framework 4.8，然後在 PowerShell 執行 `.\windows\build.ps1`。ZIP 位於 `dist\`。
+
+### macOS 選單列
+
+安裝 Go（版本見 go.mod）和 Xcode 命令列工具後，在專案根目錄執行：
+
+```sh
+./macos/build.sh
+open dist/Ghosts.app
+```
+
+點選選單列膠囊，可查看完整監聽位址、網頁標題或程序名稱、可辨認的啟動來源，以及程序樹的記憶體用量。點選網頁服務即可用預設瀏覽器開啟。「開啟 Ghosts CLI」會啟動內附的終端介面。CLI 和 `ghosts -list` 也會顯示網頁標題。可將編譯好的 App 拖入「應用程式」。
+
+首次掃描會記下已開啟的端口。之後出現新的開發端口時，膠囊會展開五秒。可在面板選擇 **English** 或 **繁體中文**，切換介面及「Ghost spotted!」／「撞著鬼！」提示的語言。互動式 CLI 也會在終端顯示短暫提示。
 
 <br>
 
@@ -60,7 +117,7 @@ AI 工具（Claude Code、Codex…）常在背景開 port 測試、起 Docker �
 
 按 <kbd>x</kbd> 停止、<kbd>X</kbd> 強制停止，再按 <kbd>⏎</kbd> 確認。
 
-- 先送 SIGTERM，3 秒沒結束才詢問要不要 SIGKILL
+- macOS 和 Linux 先送 SIGTERM，3 秒沒結束才詢問要不要 SIGKILL
 - 送出前比對程序的啟動時間，PID 被重複使用也不會誤殺
 - 容器用 `docker stop`，不會誤殺 Docker Desktop
 - App 和系統服務預設隱藏，要停之前會多一句警告

@@ -98,8 +98,27 @@ jobs:
           name: dist-linux
           path: dist/
 
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: go test ./...
+      - name: Package CLI and notification area app
+        shell: pwsh
+        run: |
+          ./windows/build.ps1 -Arch amd64 -Version ($env:GITHUB_REF_NAME -replace '^v','')
+          ./windows/build.ps1 -Arch arm64 -Version ($env:GITHUB_REF_NAME -replace '^v','')
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-windows
+          path: dist/*.zip
+
   release:
-    needs: [macos, linux]
+    needs: [macos, linux, windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

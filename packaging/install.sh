@@ -48,6 +48,13 @@ die() {
 main() {
 	local os arch
 	os="$(uname -s)"
+	case "$os" in
+	MINGW* | MSYS* | CYGWIN*)
+		env -u PSModulePath GHOSTS_WINDOWS_INSTALLER="$BASE/install.ps1" powershell.exe -NoProfile -Command \
+			'$ErrorActionPreference = "Stop"; Invoke-RestMethod $env:GHOSTS_WINDOWS_INSTALLER | Invoke-Expression'
+		return
+		;;
+	esac
 	case "$(uname -m)" in
 	x86_64 | amd64) arch=amd64 ;;
 	arm64 | aarch64) arch=arm64 ;;

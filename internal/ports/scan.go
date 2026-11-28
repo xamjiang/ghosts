@@ -1,9 +1,10 @@
-// Package ports discovers TCP listeners on macOS and Linux and describes the
+// Package ports discovers TCP listeners on macOS, Linux and Windows and describes the
 // processes behind them in human terms (project directory, friendly name, uptime).
 package ports
 
 import (
 	"fmt"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -22,6 +23,7 @@ const (
 
 // Listener is one process listening on one TCP port.
 type Listener struct {
+	NewPort    bool // first observed after a successful baseline scan
 	Port       int
 	PID        int
 	PPID       int
@@ -31,13 +33,16 @@ type Listener struct {
 	Args       []string
 	Cwd        string
 	Started    time.Time
+	Source     string // nearest recognized launcher in the observed ancestry
 	ParentName string
 	Detached   bool // orphaned: its terminal or agent session is gone
 
-	Name    string // friendly display name, e.g. "vite"
-	Runtime string // e.g. "node", "python"; empty for native binaries
-	Project string // best-guess project directory
-	Kind    Kind
+	WebScheme string // verified HTTP or HTTPS on the local listening address
+	Title     string // HTML title, when available
+	Name      string // friendly display name, e.g. "vite"
+	Runtime   string // e.g. "node", "python"; empty for native binaries
+	Project   string // best-guess project directory
+	Kind      Kind
 
 	Usage Usage // the process plus its descendants
 	Tree  []int // PIDs counted in Usage
@@ -54,6 +59,18 @@ type Snapshot struct {
 
 // Key identifies a listener across scans.
 func (l Listener) Key() string { return fmt.Sprintf("p:%d:%d", l.PID, l.Port) }
+
+// SharedPortProxy identifies Windows port forwarders that can serve several unrelated workloads.
+func (l Listener) SharedPortProxy() bool {
+	if runtime.GOOS != "windows" {
+		return false
+	}
+	switch strings.ToLower(l.Comm) {
+	case "com.docker.backend.exe", "com.docker.proxy.exe", "wslrelay.exe", "wslhost.exe", "vpnkit.exe":
+		return true
+	}
+	return false
+}
 
 // Public reports whether the socket accepts connections from other machines.
 func (l Listener) Public() bool {
@@ -82,9 +99,11 @@ func (l Listener) CommandLine() string {
 // milliseconds and spawns no processes. Slow-changing details (argv, working
 // directory) are cached by PID and start time.
 type Scanner struct {
-	mu    sync.Mutex
-	cache map[int]procInfo
-	usage *sampler
+	openPorts map[int]bool
+	mu        sync.Mutex
+	titles    map[string]titleEntry
+	cache     map[int]procInfo
+	usage     *sampler
 }
 
 func NewScanner() *Scanner {
@@ -105,7 +124,11 @@ func (s *Scanner) Scan() (Snapshot, error) {
 	type key struct{ pid, port int }
 	byKey := map[key]*Listener{}
 	var order []key
-	for _, so := range listenSockets(table.own) {
+	sockets, err := scanSockets(table.own)
+	if err != nil {
+		return Snapshot{}, fmt.Errorf("reading listening sockets: %w", err)
+	}
+	for _, so := range sockets {
 		k := key{so.pid, so.port}
 		l := byKey[k]
 		if l == nil {
@@ -127,6 +150,11 @@ func (s *Scanner) Scan() (Snapshot, error) {
 			continue // exited mid-scan
 		}
 		live[l.PID] = true
+		if info.Source == "" {
+			info.Source = launchSource(l.PID, table, executablePath)
+			s.cache[l.PID] = info
+		}
+		l.Source = info.Source
 		l.PPID = table.ppid[l.PID]
 		l.Started, l.Comm, l.Exe, l.Args, l.Cwd = info.Started, info.Comm, info.Exe, info.Args, info.Cwd
 		l.Detached = detached(l.PID, l.PPID, table)
@@ -140,7 +168,7 @@ func (s *Scanner) Scan() (Snapshot, error) {
 		res = append(res, *l)
 	}
 	for pid := range s.cache {
-		if !live[pid] {
+		if !live[pid] && (s.cache[pid].Source == "" || !s.cache[pid].Started.Equal(table.started[pid])) {
 			delete(s.cache, pid)
 		}
 	}
@@ -151,7 +179,24 @@ func (s *Scanner) Scan() (Snapshot, error) {
 		}
 		return res[i].PID < res[j].PID
 	})
-	return s.measure(res, table), nil
+	snap := s.measure(res, table)
+	s.markNewPorts(snap.Listeners)
+	s.readTitles(snap.Listeners)
+	return snap, nil
+}
+
+// Notify once per newly listening development port, even with shared workers.
+func (s *Scanner) markNewPorts(rows []Listener) {
+	current := make(map[int]bool)
+	for i := range rows {
+		l := &rows[i]
+		if l.Kind != KindDev {
+			continue
+		}
+		l.NewPort = s.openPorts != nil && !s.openPorts[l.Port] && !current[l.Port]
+		current[l.Port] = true
+	}
+	s.openPorts = current
 }
 
 // info returns cached details for pid, refreshing them if the PID now
