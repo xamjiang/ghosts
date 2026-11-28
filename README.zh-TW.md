@@ -8,12 +8,12 @@
   <a href="https://github.com/xamjiang/ghosts/releases/latest"><img src="https://img.shields.io/github/v/release/xamjiang/ghosts?style=flat-square&color=0A84FF&label=release" alt="Release"></a>
   <a href="https://github.com/xamjiang/ghosts/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/xamjiang/ghosts/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux-1C1C1E?style=flat-square&logo=apple&logoColor=white" alt="macOS · Linux">
-  <a href="#windows-安裝"><img src="https://img.shields.io/badge/Windows-x64%20%C2%B7%20ARM64-0078D4?style=flat-square" alt="Windows 安裝"></a>
+  <a href="https://github.com/ivan17lai/ghosts/releases/tag/windows-preview-1"><img src="https://img.shields.io/badge/Windows-x64%20%C2%B7%20ARM64-0078D4?style=flat-square" alt="下載 Windows 測試版"></a>
   <img src="https://img.shields.io/github/go-mod/go-version/xamjiang/ghosts?style=flat-square&color=00ADD8&logo=go&logoColor=white" alt="Go">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/xamjiang/ghosts?style=flat-square&color=30D158" alt="MIT"></a>
 </p>
 
-<h3 align="center">一行安裝</h3>
+<h3 align="center">macOS／Linux 一行安裝</h3>
 
 ```sh
 curl -fsSL https://ghosts.xamjiang.com/install | bash
@@ -25,7 +25,14 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 
 ### Windows 安裝
 
-在 Windows 10／11 的 CMD 或 PowerShell 貼上這一行。
+[Windows 測試版](https://github.com/ivan17lai/ghosts/releases/tag/windows-preview-1)提供兩個 ZIP，請依處理器選擇 [x64（Intel／AMD）](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_amd64.zip) 或 [ARM64（例如 Snapdragon）](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_arm64.zip)。
+
+1. 完整解壓縮 ZIP，再雙擊 `install.cmd`。安裝器會自動將 Ghosts 加入目前使用者的 `PATH`。
+2. 從開始功能表開一個新的 CMD，輸入 `ghost`。輸入 `ghost -list` 可以列出目前的服務。
+3. 想試圖形介面，請在 CMD 輸入 `GhostsTray.exe`，再點系統匣的 Ghosts 圖示。
+
+<details>
+<summary>正式版一行安裝（待官網部署並發佈 Windows 套件後開放）</summary>
 
 ```cmd
 powershell -NoProfile -Command "irm https://ghosts.xamjiang.com/install.ps1 | iex"
@@ -33,7 +40,7 @@ powershell -NoProfile -Command "irm https://ghosts.xamjiang.com/install.ps1 | ie
 
 安裝器會選擇 x64 或 ARM64 套件、核對 SHA-256，並將程式安裝到 `%LOCALAPPDATA%\Programs\Ghosts`，自動加入**目前使用者的 Path**。開新的 CMD 或 PowerShell 後，在任何資料夾輸入 `ghost` 即可啟動。也能使用 `ghosts` 或 `ghost -list`。
 
-離線安裝可解壓縮對應架構的 ZIP 並執行 `install.cmd`。更新前先結束正在執行的 Ghosts，再重跑安裝指令。
+</details>
 
 ### Windows 終端機與系統匣
 
