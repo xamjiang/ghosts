@@ -28,7 +28,13 @@ curl -fsSL https://ghosts.xamjiang.com/install | bash
 將這一行貼到 CMD 或 PowerShell，即可安裝 Windows 測試版。安裝完成後，開一個新的 CMD 並輸入 `ghost`。
 
 ```cmd
-powershell -NoProfile -Command "iex ([Net.WebClient]::new().DownloadString('https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/install.ps1'))"
+powershell -c "irm https://github.com/ivan17lai/ghosts/raw/main/install.ps1 | iex"
+```
+
+如果你用 Windows 的 **Git Bash**，貼上這一行：
+
+```sh
+curl -fsSL https://github.com/ivan17lai/ghosts/raw/main/install | bash
 ```
 
 [Windows 測試版](https://github.com/ivan17lai/ghosts/releases/tag/windows-preview-1)提供兩個 ZIP，請依處理器選擇 [x64（Intel／AMD）](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_amd64.zip) 或 [ARM64（例如 Snapdragon）](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_arm64.zip)。

@@ -28,7 +28,13 @@ New to the terminal? <a href="#getting-started">Follow the step-by-step guide â†
 Paste this command into CMD or PowerShell to install the Windows preview. After installation, open a new Command Prompt and type `ghost`.
 
 ```cmd
-powershell -NoProfile -Command "iex ([Net.WebClient]::new().DownloadString('https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/install.ps1'))"
+powershell -c "irm https://github.com/ivan17lai/ghosts/raw/main/install.ps1 | iex"
+```
+
+In **Git Bash for Windows**, use this command:
+
+```sh
+curl -fsSL https://github.com/ivan17lai/ghosts/raw/main/install | bash
 ```
 
 Download the [Windows preview](https://github.com/ivan17lai/ghosts/releases/tag/windows-preview-1) for your processor. Choose [x64 for Intel or AMD](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_amd64.zip) or [ARM64 for Windows on ARM](https://github.com/ivan17lai/ghosts/releases/download/windows-preview-1/ghosts_dev_windows_arm64.zip).
