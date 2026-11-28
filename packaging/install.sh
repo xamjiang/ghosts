@@ -50,7 +50,7 @@ main() {
 	os="$(uname -s)"
 	case "$os" in
 	MINGW* | MSYS* | CYGWIN*)
-		GHOSTS_WINDOWS_INSTALLER="$BASE/install.ps1" powershell.exe -NoProfile -Command \
+		env -u PSModulePath GHOSTS_WINDOWS_INSTALLER="$BASE/install.ps1" powershell.exe -NoProfile -Command \
 			'$ErrorActionPreference = "Stop"; Invoke-RestMethod $env:GHOSTS_WINDOWS_INSTALLER | Invoke-Expression'
 		return
 		;;
